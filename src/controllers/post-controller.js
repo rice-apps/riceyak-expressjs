@@ -14,7 +14,7 @@ router.get('/', function (request, response) {
 
    // Most db operations take a function as their second argument, which is called after the query completes. This
    // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
-   // the second argument (rides) contains our results.
+   // the second argument (posts) contains our results.
    Post.find({}, function (err, posts) {
        if (err) {
            return response.status(500); // db error (500 internal server error)
@@ -22,7 +22,7 @@ router.get('/', function (request, response) {
        if (!posts) {
            return response.status(404); // not found (404 not found)
        }
-       response.status(200).send(posts); // success - send the rides!
+       response.status(200).send(posts); // success - send the posts!
    })
 });
 
