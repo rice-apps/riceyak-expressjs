@@ -26,5 +26,21 @@ router.get('/', function (request, response) {
    })
 });
 
+/**
+ * Posts a post.
+ */
+router.post('/', function (req, res) {
+    // req.body lets us access the body of the request, which contains the data for the post.
+    Post.create({
+        title: req.body.title,
+        body: req.body.body,
+        author: req.body.author,
+        date: Date.now()
+    }, function (err, post) {
+        if (err) return res.status(500);
+        res.status(200).send(post);
+    });
+});
+
 module.exports = router;
 
