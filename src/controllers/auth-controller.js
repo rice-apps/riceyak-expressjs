@@ -9,6 +9,8 @@ var stripPrefix = require('xml2js').processors.stripPrefix;
 
 var config = require('../config');
 
+var User = require('../models/user');
+
 router.use(bodyParser.json());
 
 /**
@@ -30,11 +32,23 @@ router.get('/', function (req, res) {
             xmlParser(body, { tagNameProcessors: [stripPrefix], explicitArray: false }, function (err, result) {
                 serviceResponse = result.serviceResponse;
 
-                if (serviceResponse.authenticationSuccess) {
-
+                var authSucceded = serviceResponse.authenticationSuccess
+                if (authSucceded) {
                     // here, we create a token with the user's info as its payload.
-                    // serviceResponse.authenticationSuccess contains: { user: <username>, attributes: <attributes>}
-                    var token = jwt.sign({ data: serviceResponse.authenticationSuccess }, config.secret);
+                    // authSucceded contains: { user: <username>, attributes: <attributes>}
+                    var token = jwt.sign({ data: authSucceded }, config.secret);
+
+                    // see if this netID exists as a user already. if not, create one.
+                    User.findOne({ username: authSucceded.user }, function (err, user) {
+                        if (err) return res.status(500);
+                        if (!user) {
+                            User.create({
+                                user: authSucceded.user
+                            }, function (err, newUser) {
+                                if (err) return res.status(500);
+                            });
+                        }
+                    })
 
                     // send our token to the frontend! now, whenever the user tries to access a resource, we check their
                     // token by verifying it and seeing if the payload (the username) allows this user to access
