@@ -32,8 +32,6 @@ router.get('/', function (request, response) {
  * Posts a post.
  */
 router.post('/', function (req, res) {
-    // req.body lets us access the body of the request, which contains the data for the post.
-    console.log(req.user.user);
     User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
