@@ -43,7 +43,7 @@ router.get('/', function (req, res) {
                         if (err) return res.status(500);
                         if (!user) {
                             User.create({
-                                user: authSucceded.user
+                                username: authSucceded.user
                             }, function (err, newUser) {
                                 if (err) return res.status(500);
                             });
