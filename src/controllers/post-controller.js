@@ -1,8 +1,10 @@
 var express = require('express');
-var router = express.Router();
 var bodyParser = require('body-parser');
 
+/* Plug in our authorization checker */ 
+var router = require('../middleware/auth-router');
 var Post = require('../models/post');
+var User = require('../models/user');
 
 router.use(bodyParser.json());
 
@@ -31,15 +33,21 @@ router.get('/', function (request, response) {
  */
 router.post('/', function (req, res) {
     // req.body lets us access the body of the request, which contains the data for the post.
-    Post.create({
-        title: req.body.title,
-        body: req.body.body,
-        author: req.body.author,
-        date: Date.now()
-    }, function (err, post) {
+    console.log(req.user.user);
+    User.find({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
-        res.status(200).send(post);
-    });
+        if (!user) return res.status(404);
+        Post.create({
+            title: req.body.title,
+            body: req.body.body,
+            author: user,
+            date: Date.now()
+        }, function (err, post) {
+            if (err) return res.status(500);
+            res.status(200).send(post);
+        });
+    })
+    
 });
 
 module.exports = router;

@@ -9,8 +9,6 @@ var stripPrefix = require('xml2js').processors.stripPrefix;
 
 var config = require('../config');
 
-var Post = require('../models/post');
-
 router.use(bodyParser.json());
 
 /**
