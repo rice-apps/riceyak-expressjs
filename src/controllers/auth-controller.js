@@ -19,6 +19,7 @@ router.use(bodyParser.json());
  * the CAS server and then parse the response to see if we succeeded, and let the frontend know.
  */
 router.get('/', function (req, res) {
+
     var ticket = req.query.ticket;
 
     if (ticket) {
@@ -73,6 +74,8 @@ router.get('/', function (req, res) {
                 }           
             })
         })
+    } else {
+        return res.status(400);
     }
 });
 

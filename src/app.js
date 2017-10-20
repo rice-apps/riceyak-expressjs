@@ -3,6 +3,7 @@ var morgan = require('morgan');
 var cors = require('cors');
 
 var db = require('./db');
+var config = require('./config');
 var postController = require('./controllers/post-controller');
 var authController = require('./controllers/auth-controller');
 
@@ -12,8 +13,12 @@ var app = express();
 /* Set up request logging */
 app.use(morgan('combined'));
 
-/* Add plugin to enable CORS */
-app.use(cors());
+/* Enable CORS */
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", config.frontendURL);
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 
 /* Declare our routes */
 app.use('/posts', postController);
