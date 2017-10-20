@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 
 /* Plug in our authorization checker */ 
 var router = require('../middleware/auth-router');
+
 var Post = require('../models/post');
 var User = require('../models/user');
 

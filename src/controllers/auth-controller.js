@@ -24,12 +24,16 @@ router.get('/', function (req, res) {
     if (ticket) {
         // validate our ticket against the CAS server
         var url = `${config.CASValidateURL}?ticket=${ticket}&service=${config.thisServiceURL}`;
-        request(url, function(err, response, body) { 
+        request(url, function(err, response, body) {
+
+            if (err) return res.status(500);
 
             // parse the XML. 
             // notice the second argument - it's an object of options for the parser, one to strip the namespace 
             // prefix off of tags and another to prevent the parser from creating 1-element arrays.
             xmlParser(body, { tagNameProcessors: [stripPrefix], explicitArray: false }, function (err, result) {
+                if (err) return res.status(500);
+
                 serviceResponse = result.serviceResponse;
 
                 var authSucceded = serviceResponse.authenticationSuccess
@@ -56,14 +60,18 @@ router.get('/', function (req, res) {
                     res.json({
                         success: true,
                         message: 'CAS authentication success',
-                        token: token
+                        user: {
+                            username: authSucceded.user,
+                            token: token
+                        }
                     });
 
                 } else if (serviceResponse.authenticationFailure) {
                     res.status(401).json({ success: false, message: 'CAS authentication failed' });
-                }             
+                } else {
+                    res.status(500);
+                }           
             })
-            
         })
     }
 });
