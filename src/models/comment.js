@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-
+//
 var CommentSchema = new mongoose.Schema({
     body: String,
     score: {type: Number, default: 0},
