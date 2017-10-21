@@ -53,7 +53,7 @@ router.get('/', function (req, res) {
                                 if (err) return res.status(500);
                             });
                         }
-                    })
+                    });
 
                     // send our token to the frontend! now, whenever the user tries to access a resource, we check their
                     // token by verifying it and seeing if the payload (the username) allows this user to access

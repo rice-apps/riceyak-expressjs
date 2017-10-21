@@ -1,13 +1,10 @@
-var express = require('express');
 var jwt = require('jsonwebtoken');
-var authRouter = express.Router();
-var bodyParser = require('body-parser');
-var User = require('./../models/user');
+
 var config = require('../config');
 
-authRouter.use(bodyParser.json());
+var authMiddleWare = function(req, res, next) {
 
-authRouter.use(function(req, res, next) {
+    console.log(req);
 
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
 
@@ -26,6 +23,6 @@ authRouter.use(function(req, res, next) {
             message: 'No token provided.'
         });
     }
-});
+};
 
-module.exports = authRouter;
+module.exports = authMiddleWare;

@@ -1,11 +1,16 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 
-/* Plug in our authorization checker */ 
-var router = require('../middleware/auth-router');
+var router = express.Router();
+
+/* Get our authorization checker */
+var authMiddleWare = require('../middleware/auth-middleware');
 
 var Post = require('../models/post');
 var User = require('../models/user');
+
+/* Plug our authorization checker in */
+router.use(authMiddleWare);
 
 router.use(bodyParser.json());
 
