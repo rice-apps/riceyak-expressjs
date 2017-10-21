@@ -22,7 +22,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 /* Declare our routes */
-app.use('/posts', postController);
-app.use('/auth', authController);
+app.use('/api/posts', postController);
+app.use('/api/auth', authController);
 
 module.exports = app;
