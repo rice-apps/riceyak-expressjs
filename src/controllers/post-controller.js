@@ -44,8 +44,10 @@ router.get('/', function (request, response) {
 /**
  * Posts a post.
  */
-router.post('/', postLimiter, function (req, res) {
-    User.findOne({username: req.user.user}, function (err, user) {
+// TODO TURN ME OFF
+// router.post('/', postLimiter, function (req, res) {
+router.post('/', function (req, res) {
+        User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
         Post.create({
