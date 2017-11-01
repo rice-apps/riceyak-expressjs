@@ -11,12 +11,12 @@ var User = require('../models/user');
 var authMiddleWare = require('../middleware/auth-middleware');
 router.use(authMiddleWare);
 
-/* Set up rate limiting for posts */
+/* Set up rate limiting */
 var postLimiter = new RateLimit({
-    windowMs: 15*60*1000, // 15 min,
-    max: 5,
-    delayAfter: 1,
-    delayMs: 3*1000
+    windowMs: 15*60*1000, // 15 min window
+    max: 7, // maximum 5 posts per window
+    delayAfter: 3, // start delaying requests after 3 posts in window
+    delayMs: 3*1000 // delay by 3 seconds per post after delayAfter limit reached
 });
 
 router.use(bodyParser.json());
