@@ -4,7 +4,7 @@ var CommentSchema = new mongoose.Schema({
     body: String,
     score: {type: Number, default: 0},
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-});
+}, { versionKey: false });
 
 // exclude the author field - riceyak is anonymous!
 CommentSchema.set('toJSON', {

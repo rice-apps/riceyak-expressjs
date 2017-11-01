@@ -6,8 +6,7 @@ var PostSchema = new mongoose.Schema({
     score: {type: Number, default: 0},
     date: Date,
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]
-});
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]}, { versionKey: false });
 
 var populate = function (next) { this.populate('author'); next(); };
 
