@@ -82,19 +82,25 @@ router.put('/:id', function (req, res) {
     User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
-        Post.findOneAndUpdate({_id: req.params.id}, req.body,{new: true}, function (err, post) {
-            if(post.author != req.user.user){
+        Post.findById(req.params.id, function (err, post) {
+            if (err) {
+                return response.status(500); // db error (500 internal server error)
+            }
+            if (!post) {
+                return response.status(404); // not found (404 not found)
+            }
+
+            if(post.author.equals(user)){
                 return res.status(401);
             }
-            if (err){
-                return res.status(500);
-            }
-            if (!post){
-                return res.status(404);
-            }
-            res.status(200).send(post);
 
-        });
+            post = _.extend(post,req.body);
+            post.save(function (err, post) {
+                res.status(200).send(post);
+            })
+
+             // success - send the post!
+        })
     })
     /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
         if (err){
