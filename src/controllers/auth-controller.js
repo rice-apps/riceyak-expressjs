@@ -37,7 +37,7 @@ router.get('/', function (req, res) {
 
                 serviceResponse = result.serviceResponse;
 
-                var authSucceded = serviceResponse.authenticationSuccess
+                var authSucceded = serviceResponse.authenticationSuccess;
                 if (authSucceded) {
                     // here, we create a token with the user's info as its payload.
                     // authSucceded contains: { user: <username>, attributes: <attributes>}
@@ -47,10 +47,12 @@ router.get('/', function (req, res) {
                     User.findOne({ username: authSucceded.user }, function (err, user) {
                         if (err) return res.status(500);
                         if (!user) {
-                            User.create({
-                                username: authSucceded.user
-                            }, function (err, newUser) {
+                            User.create({ username: authSucceded.user }, function (err, newUser) {
                                 if (err) return res.status(500);
+                                newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
+                                newUser.save(function (err, u) {
+                                    if (err) return res.status(500);
+                                })
                             });
                         }
                     });

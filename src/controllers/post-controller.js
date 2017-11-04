@@ -1,18 +1,25 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var RateLimit = require('express-rate-limit');
 
 var router = express.Router();
-
-/* Get our authorization checker */
-var authMiddleWare = require('../middleware/auth-middleware');
 
 var Post = require('../models/post');
 var User = require('../models/user');
 
 var _ = require('underscore');
 
-/* Plug our authorization checker in */
+/* Get our authorization checker and plug it in */
+var authMiddleWare = require('../middleware/auth-middleware');
 router.use(authMiddleWare);
+
+/* Set up rate limiting */
+var postLimiter = new RateLimit({
+    windowMs: 15*60*1000, // 15 min window
+    max: 7, // maximum 5 posts per window
+    delayAfter: 3, // start delaying requests after 3 posts in window
+    delayMs: 3*1000 // delay by 3 seconds per post after delayAfter limit reached
+});
 
 router.use(bodyParser.json());
 
@@ -25,7 +32,7 @@ router.get('/', function (request, response) {
    // Most db operations take a function as their second argument, which is called after the query completes. This
    // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
    // the second argument (posts) contains our results.
-   Post.find({}, function (err, posts) {
+   Post.find({}).sort('-date').limit(100).exec(function (err, posts) {
        if (err) {
            return response.status(500); // db error (500 internal server error)
        }
@@ -39,8 +46,10 @@ router.get('/', function (request, response) {
 /**
  * Posts a post.
  */
+// TODO TURN ME OFF
+// router.post('/', postLimiter, function (req, res) {
 router.post('/', function (req, res) {
-    User.findOne({username: req.user.user}, function (err, user) {
+        User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
         Post.create({
@@ -115,4 +124,3 @@ router.put('/:id', function (req, res) {
 
 });
 module.exports = router;
-

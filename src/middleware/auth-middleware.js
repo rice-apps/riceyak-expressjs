@@ -4,8 +4,6 @@ var config = require('../config');
 
 var authMiddleWare = function(req, res, next) {
 
-    console.log(req);
-
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
 
     if (token) {
