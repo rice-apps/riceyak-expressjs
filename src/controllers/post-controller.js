@@ -9,6 +9,8 @@ var authMiddleWare = require('../middleware/auth-middleware');
 var Post = require('../models/post');
 var User = require('../models/user');
 
+var _ = require('underscore');
+
 /* Plug our authorization checker in */
 router.use(authMiddleWare);
 
@@ -68,9 +70,43 @@ router.get('/:id', function (request, response) {
         if (!post) {
             return response.status(404); // not found (404 not found)
         }
+
         response.status(200).send(post); // success - send the post!
     })
 });
 
+router.put('/:id', function (req, res) {
+    //find user
+    //if found, then find the post by id
+    //if post author matches user, then perform update and send updated post back
+    User.findOne({username: req.user.user}, function (err, user) {
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+        Post.findOneAndUpdate({_id: req.params.id}, req.body,{new: true}, function (err, post) {
+            if(post.author != req.user.user){
+                return res.status(401);
+            }
+            if (err){
+                return res.status(500);
+            }
+            if (!post){
+                return res.status(404);
+            }
+            res.status(200).send(post);
+
+        });
+    })
+    /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
+        if (err){
+            return res.status(500);
+        }
+        if (!post){
+            return res.status(404);
+        }
+        res.status(200).send(post);
+
+    });*/
+
+});
 module.exports = router;
 
