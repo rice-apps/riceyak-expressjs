@@ -88,9 +88,11 @@ router.put('/:id', function (req, res) {
     //find user
     //if found, then find the post by id
     //if post author matches user, then perform update and send updated post back
+
     User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
+
         Post.findById(req.params.id, function (err, post) {
             if (err) {
                 return response.status(500); // db error (500 internal server error)
@@ -100,17 +102,22 @@ router.put('/:id', function (req, res) {
             }
 
             if(post.author.equals(user)){
-                return res.status(401);
+
+                post = _.extend(post,req.body);
+
+                post.save(function (err, post) {
+                    res.status(200).send(post);
+                })
+            }
+            else{
+                res.status(401).send('users not equal');
             }
 
-            post = _.extend(post,req.body);
-            post.save(function (err, post) {
-                res.status(200).send(post);
-            })
 
              // success - send the post!
         })
     })
+
     /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
         if (err){
             return res.status(500);
@@ -123,4 +130,26 @@ router.put('/:id', function (req, res) {
     });*/
 
 });
+router.delete('/:id', function (req, res) {
+    User.findOne({username: req.user.user}, function (err, user) {
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+
+        Post.findById(req.params.id, function (err, post) {
+            if (err) return res.status(500);
+
+            if (!post) return res.status(404).send("No post found.");
+            if(post.author.equals(user)){
+                post.remove(function (err) {
+                    if (err) return res.status(500);
+                });
+                res.status(200).send("OK");
+            }
+            else {
+                res.status(401).send("users dont match")
+            }
+        })
+    })
+
+})
 module.exports = router;
