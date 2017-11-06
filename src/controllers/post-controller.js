@@ -83,7 +83,43 @@ router.get('/:id', function (request, response) {
         response.status(200).send(post); // success - send the post!
     })
 });
+router.put('/:id/comments', function (req, res) {
+    //find user
+    //if found, then find the post by id
+    //if post author matches user, then perform update and send updated post back
+    console.log('here')
+    User.findOne({username: req.user.user}, function (err, user) {
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+        console.log('user')
+        Post.findByIdAndUpdate(req.params.id,{$set:{comments: req.body.comments}},{new: true}, function (err, post) {
+            console.log('comments')
+            console.log(req.body.comments)
+            if (err) {
+                console.log(err);
+                res.status(500).send('internal server error'); // db error (500 internal server error)
+            }
+            if (!post) {
+                res.status(404).send('post not found'); // not found (404 not found)
+            }
+            console.log(post)
+            res.status(200).send(post)
+            // success - send the post!
+        })
+    })
 
+    /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
+        if (err){
+            return res.status(500);
+        }
+        if (!post){
+            return res.status(404);
+        }
+        res.status(200).send(post);
+
+    });*/
+
+});
 router.put('/:id', function (req, res) {
     //find user
     //if found, then find the post by id
