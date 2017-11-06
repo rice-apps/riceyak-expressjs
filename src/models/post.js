@@ -8,7 +8,11 @@ var PostSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]}, { versionKey: false });
 
-var populate = function (next) { this.populate('author'); next(); };
+var populate = function (next) {
+    this.populate('author');
+    this.populate('comments');
+    next();
+};
 
 PostSchema.pre('find', populate);
 PostSchema.pre('findOne', populate);
