@@ -95,7 +95,7 @@ router.post('/:id/comments', function (req, res) {
 
         Comment.create(
             {
-            body: req.body.comment.body,
+            body: req.body.comment,
             author: user,
             date: Date.now(),
             score: 0
@@ -103,14 +103,24 @@ router.post('/:id/comments', function (req, res) {
             function (err, comment) {
 
             if (err) res.status(500).send('comment not created');
+                Post.findById(req.params.id, function (err, post) {
 
-            Post.findById(req.params.id, function (err, post) {
+                    if (err) {
+                        console.log(err);
+                        res.status(500).send('internal server error'); // db error (500 internal server error)
+                    }
+                    if (!post) {
+                        res.status(404).send('post not found'); // not found (404 not found)
+                    }
+                    post.comments.push(comment)
+                    console.log(post)
+                    post.save(function (err, post) {
+                        res.status(200).send(post);
+                    })
 
-                post.comments.push(comment)
-                post.save(function (err, updatedPost) {
-                    res.status(200).send(updatedPost);
+                    // success - send the post!
                 })
-            })
+           
         })
     })
 })
