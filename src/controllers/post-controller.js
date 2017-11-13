@@ -1,11 +1,13 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var RateLimit = require('express-rate-limit');
+var _ = require('underscore');
 
 var router = express.Router();
 
 var Post = require('../models/post');
 var User = require('../models/user');
+var Vote = require('../models/vote');
 
 /* Get our authorization checker and plug it in */
 var authMiddleWare = require('../middleware/auth-middleware');
@@ -32,13 +34,46 @@ router.get('/', function (request, response) {
    // the second argument (posts) contains our results.
    Post.find({}).sort('-date').limit(100).exec(function (err, posts) {
        if (err) {
-           return response.status(500); // db error (500 internal server error)
-       }
-       if (!posts) {
-           return response.status(404); // not found (404 not found)
+           return response.status(500).send(err); // db error (500 internal server error)
        }
        response.status(200).send(posts); // success - send the posts!
    })
+});
+
+/**
+ * Vote on a post.
+ */
+router.put('/:post_id/vote', function (req, res) {
+    if (req.body.vote > 1 || req.body.vote < -1) {
+        return res.status(400).send();
+    }
+    User.findById(req.user.userID, function (err, user) {
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
+        
+        Post.findById(req.params.post_id, function (err, post) {
+            if (err) return res.status(500).send();
+            if (!post) return res.status(404).send();
+
+            var idx = _.findIndex(post.votes, function (v) {
+                if (v.user.equals(user._id)) {
+                    return true;
+                }
+            });
+
+            if (idx == -1) {
+                post.votes.push({ user: user, vote: req.body.vote });
+            } else {
+                post.votes[idx].vote = req.body.vote
+            }
+            
+            post.save(function (err, newPost) {
+                if (err) res.status(500).send();
+                res.status(200).send(newPost);
+            })
+        })
+    });
+    
 });
 
 /**
@@ -47,20 +82,19 @@ router.get('/', function (request, response) {
 // TODO TURN ME OFF
 // router.post('/', postLimiter, function (req, res) {
 router.post('/', function (req, res) {
-        User.findOne({username: req.user.user}, function (err, user) {
-        if (err) return res.status(500);
-        if (!user) return res.status(404);
+    User.findById(req.user.userID, function (err, user) {
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
         Post.create({
             title: req.body.title,
             body: req.body.body,
             author: user,
             date: Date.now()
         }, function (err, post) {
-            if (err) return res.status(500);
+            if (err) return res.status(500).send();
             res.status(200).send(post);
         });
     })
-    
 });
 
 router.get('/:id', function (request, response) {
@@ -72,10 +106,10 @@ router.get('/:id', function (request, response) {
 
     Post.findById(request.params.id, function (err, post) {
         if (err) {
-            return response.status(500); // db error (500 internal server error)
+            return response.status(500).send(); // db error (500 internal server error)
         }
         if (!post) {
-            return response.status(404); // not found (404 not found)
+            return response.status(404).send(); // not found (404 not found)
         }
         response.status(200).send(post); // success - send the post!
     })
