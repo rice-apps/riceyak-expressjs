@@ -9,6 +9,8 @@ var Post = require('../models/post');
 var User = require('../models/user');
 var Vote = require('../models/vote');
 
+var _ = require('underscore');
+
 /* Get our authorization checker and plug it in */
 var authMiddleWare = require('../middleware/auth-middleware');
 router.use(authMiddleWare);
@@ -111,8 +113,48 @@ router.get('/:id', function (request, response) {
         if (!post) {
             return response.status(404).send(); // not found (404 not found)
         }
+
         response.status(200).send(post); // success - send the post!
     })
 });
 
+router.put('/:id', function (req, res) {
+    //find user
+    //if found, then find the post by id
+    //if post author matches user, then perform update and send updated post back
+    User.findOne({username: req.user.user}, function (err, user) {
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+        Post.findById(req.params.id, function (err, post) {
+            if (err) {
+                return response.status(500); // db error (500 internal server error)
+            }
+            if (!post) {
+                return response.status(404); // not found (404 not found)
+            }
+
+            if(post.author.equals(user)){
+                return res.status(401);
+            }
+
+            post = _.extend(post,req.body);
+            post.save(function (err, post) {
+                res.status(200).send(post);
+            })
+
+             // success - send the post!
+        })
+    })
+    /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
+        if (err){
+            return res.status(500);
+        }
+        if (!post){
+            return res.status(404);
+        }
+        res.status(200).send(post);
+
+    });*/
+
+});
 module.exports = router;
