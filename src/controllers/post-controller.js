@@ -49,6 +49,7 @@ router.put('/:post_id/vote', function (req, res) {
     if (req.body.vote > 1 || req.body.vote < -1) {
         return res.status(400).send();
     }
+    
     User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
@@ -75,7 +76,6 @@ router.put('/:post_id/vote', function (req, res) {
             })
         })
     });
-    
 });
 
 /**
