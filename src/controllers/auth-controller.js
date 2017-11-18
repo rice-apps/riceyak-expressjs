@@ -27,7 +27,7 @@ router.get('/', function (req, res) {
         var url = `${config.CASValidateURL}?ticket=${ticket}&service=${config.thisServiceURL}`;
         request(url, function(err, response, body) {
 
-            if (err) return res.status(500);
+            if (err) res.status(500).send();
 
             // parse the XML. 
             // notice the second argument - it's an object of options for the parser, one to strip the namespace 
@@ -39,9 +39,6 @@ router.get('/', function (req, res) {
 
                 var authSucceded = serviceResponse.authenticationSuccess;
                 if (authSucceded) {
-                    // here, we create a token with the user's info as its payload.
-                    // authSucceded contains: { user: <username>, attributes: <attributes>}
-                    var token = jwt.sign({ data: authSucceded }, config.secret);
 
                     // see if this netID exists as a user already. if not, create one.
                     User.findOne({ username: authSucceded.user }, function (err, user) {
@@ -51,34 +48,46 @@ router.get('/', function (req, res) {
                                 if (err) return res.status(500);
                                 newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
                                 newUser.save(function (err, u) {
-                                    if (err) return res.status(500);
-                                })
+                                    if (err) res.status(500).send();
+                                });
+                                // here, we create a token with the user's info as its payload.
+                                // authSucceded contains: { user: <username>, attributes: <attributes>}
+                                var token = jwt.sign({ data: authSucceded, userID: newUser._id }, config.secret);
+                                sendJSON(res, newUser._id, authSucceded.user, token);
                             });
+                        } else {
+                            var token = jwt.sign({ data: authSucceded, userID: user._id }, config.secret);
+                            sendJSON(res, user._id, authSucceded.user, token);
                         }
                     });
 
-                    // send our token to the frontend! now, whenever the user tries to access a resource, we check their
-                    // token by verifying it and seeing if the payload (the username) allows this user to access
-                    // the requested resource.
-                    res.json({
-                        success: true,
-                        message: 'CAS authentication success',
-                        user: {
-                            username: authSucceded.user,
-                            token: token
-                        }
-                    });
+
 
                 } else if (serviceResponse.authenticationFailure) {
                     res.status(401).json({ success: false, message: 'CAS authentication failed' });
                 } else {
-                    res.status(500);
+                    res.status(500).send();
                 }           
             })
         })
     } else {
-        return res.status(400);
+        return res.status(400).send();
     }
 });
+
+var sendJSON = function(res, userID, username, token) {
+    // send our token to the frontend! now, whenever the user tries to access a resource, we check their
+    // token by verifying it and seeing if the payload (the username) allows this user to access
+    // the requested resource.
+    res.json({
+        success: true,
+        message: 'CAS authentication success',
+        user: {
+            username: username,
+            userID: userID,
+            token: token
+        }
+    });
+};
 
 module.exports = router;

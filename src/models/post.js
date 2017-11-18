@@ -1,16 +1,24 @@
 var mongoose = require('mongoose');
+var _ = require('underscore');
 
 var PostSchema = new mongoose.Schema({
     title: String,
     body: String,
-    score: {type: Number, default: 0},
+    score: { type: Number, default: 0 },
     date: Date,
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }]}, { versionKey: false });
+    comments: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' } ],
+    // votes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Vote' }]
+    votes: [ { user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number } ]
+}, { versionKey: false });
 
 var populate = function (next) {
     this.populate('author');
-    this.populate('comments');
+    // this.populate('comments');
+    // calculate score
+    this.score = _.reduce(this.votes, function (memo, vote) {
+        return memo + vote.vote
+    }, 0);
     next();
 };
 
