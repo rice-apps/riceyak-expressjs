@@ -25,6 +25,7 @@ var postLimiter = new RateLimit({
 
 router.use(bodyParser.json());
 
+
 /**
  * Returns all posts.
  */
@@ -145,16 +146,47 @@ router.put('/:id', function (req, res) {
              // success - send the post!
         })
     })
-    /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
-        if (err){
-            return res.status(500);
-        }
-        if (!post){
-            return res.status(404);
-        }
-        res.status(200).send(post);
-
-    });*/
-
 });
+router.post('/:id/comments', function (req, res) {
+    //find user
+    //if found, then create comment
+    //add comment to post's comment, save, and return updated post
+
+    User.findOne({username: req.user.user}, function (err, user) {
+
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+
+        Comment.create(
+            {
+            body: req.body.comment,
+            author: user,
+            date: Date.now(),
+            score: 0
+            },
+            function (err, comment) {
+
+            if (err) res.status(500).send('comment not created');
+                Post.findById(req.params.id, function (err, post) {
+
+                    if (err) {
+                        console.log(err);
+                        res.status(500).send('internal server error'); // db error (500 internal server error)
+                    }
+                    if (!post) {
+                        res.status(404).send('post not found'); // not found (404 not found)
+                    }
+                    post.comments.push(comment)
+                    console.log(post)
+                    post.save(function (err, post) {
+                        res.status(200).send(post);
+                    })
+
+                    // success - send the post!
+                })
+
+        })
+    })
+});
+
 module.exports = router;
