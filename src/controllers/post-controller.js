@@ -7,8 +7,8 @@ var router = express.Router();
 
 var Post = require('../models/post');
 var User = require('../models/user');
+var Comment = require('../models/comment');
 var Vote = require('../models/vote');
-
 var _ = require('underscore');
 
 /* Get our authorization checker and plug it in */
@@ -40,7 +40,7 @@ router.get('/', function (request, response) {
        }
        response.status(200).send(posts); // success - send the posts!
    })
-});
+})
 
 /**
  * Vote on a post.
@@ -97,6 +97,7 @@ router.post('/', function (req, res) {
             res.status(200).send(post);
         });
     })
+
 });
 
 router.get('/:id', function (request, response) {
@@ -116,15 +117,59 @@ router.get('/:id', function (request, response) {
 
         response.status(200).send(post); // success - send the post!
     })
-});
+})
+
+router.post('/:id/comments', function (req, res) {
+    //find user
+    //if found, then create comment
+    //add comment to post's comment, save, and return updated post
+
+    User.findOne({username: req.user.user}, function (err, user) {
+
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+
+        Comment.create(
+            {
+            body: req.body.comment,
+            author: user,
+            date: Date.now(),
+            score: 0
+            },
+            function (err, comment) {
+
+            if (err) res.status(500).send('comment not created');
+                Post.findById(req.params.id, function (err, post) {
+
+                    if (err) {
+                        console.log(err);
+                        res.status(500).send('internal server error'); // db error (500 internal server error)
+                    }
+                    if (!post) {
+                        res.status(404).send('post not found'); // not found (404 not found)
+                    }
+                    post.comments.push(comment)
+                    console.log(post)
+                    post.save(function (err, post) {
+                        res.status(200).send(post);
+                    })
+
+                    // success - send the post!
+                })
+           
+        })
+    })
+})
 
 router.put('/:id', function (req, res) {
     //find user
     //if found, then find the post by id
     //if post author matches user, then perform update and send updated post back
+
     User.findOne({username: req.user.user}, function (err, user) {
         if (err) return res.status(500);
         if (!user) return res.status(404);
+
         Post.findById(req.params.id, function (err, post) {
             if (err) {
                 return response.status(500); // db error (500 internal server error)
@@ -134,27 +179,47 @@ router.put('/:id', function (req, res) {
             }
 
             if(post.author.equals(user)){
-                return res.status(401);
+
+                post = _.extend(post,req.body);
+
+                post.save(function (err, post) {
+                    res.status(200).send(post);
+                })
+            }
+            else{
+                res.status(401).send('users not equal');
             }
 
-            post = _.extend(post,req.body);
-            post.save(function (err, post) {
-                res.status(200).send(post);
-            })
-
-             // success - send the post!
         })
     })
-    /*Post.findOneAndUpdate({_id: req.params.id, author: req.user.user}, req.body,{new: true}, function (err, post) {
-        if (err){
-            return res.status(500);
-        }
-        if (!post){
-            return res.status(404);
-        }
-        res.status(200).send(post);
+})
 
-    });*/
+router.delete('/:id', function (req, res) {
+    //find user
+    //if found and user matches the post's author, delete post
 
-});
+    User.findOne({username: req.user.user}, function (err, user) {
+
+        if (err) return res.status(500);
+        if (!user) return res.status(404);
+
+        Post.findById(req.params.id, function (err, post) {
+
+            if (err) return res.status(500);
+
+            if (!post) return res.status(404).send("No post found.");
+
+            if(post.author.equals(user)){
+
+                post.remove(function (err) {
+                    if (err) return res.status(500);
+                });
+                res.status(200).send("OK");
+            }
+            else {
+                res.status(401).send("users dont match")
+            }
+        })
+    })
+})
 module.exports = router;

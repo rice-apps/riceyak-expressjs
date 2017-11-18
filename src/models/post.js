@@ -12,7 +12,6 @@ var PostSchema = new mongoose.Schema({
     votes: [ { user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number } ]
 }, { versionKey: false });
 
-
 var populate = function (next) {
     this.populate('author');
     // this.populate('comments');
