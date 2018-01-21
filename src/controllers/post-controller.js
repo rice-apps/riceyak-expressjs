@@ -110,7 +110,8 @@ router.post('/', postLimiter, function (req, res) {
             title: req.body.title,
             body: req.body.body,
             author: user,
-            date: Date.now()
+            date: Date.now(),
+            comments: []
         }, function (err, post) {
             if (err) return res.status(500).send();
             return res.status(200).send(post);
@@ -143,10 +144,11 @@ router.get('/:id', getLimiter, function (request, response) {
 router.post('/:id/comments', commentLimiter, function (req, res) {
 
     // find user
-    User.findOne({username: req.user.user}, function (err, user) {
+    console.log(req.user.userID);
+    User.findById(req.user.userID, function (err, user) {
 
-        if (err) return res.status(500);
-        if (!user) return res.status(404);
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
 
         // if found, then create comment
         Comment.create(
