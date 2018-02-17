@@ -4,15 +4,15 @@ var CommentSchema = new mongoose.Schema({
     body: String,
     score: {type: Number, default: 0},
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    date: Date,
+    date: Date
 }, { versionKey: false });
 
-// exclude the author field - riceyak is anonymous!
-CommentSchema.set('toJSON', {
-    transform: function(doc, ret, options) {
-        delete ret.author;
-        return ret;
-    }
-});
+var populate = function (next) {
+    this.populate('author');
+    next();
+};
+
+CommentSchema.pre('find', populate);
+CommentSchema.pre('findOne', populate);
 
 module.exports = mongoose.model('Comment', CommentSchema);
