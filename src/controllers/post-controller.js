@@ -49,7 +49,6 @@ router.get('/', getLimiter,  function (request, response) {
        if (err) {
            return response.status(500).send(); // db error (500 internal server error)
        }
-
        return response.status(200).send(posts); // success - send the posts!
    })
 });
