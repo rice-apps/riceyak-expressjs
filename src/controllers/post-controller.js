@@ -49,7 +49,6 @@ router.get('/', getLimiter,  function (request, response) {
        if (err) {
            return response.status(500).send(); // db error (500 internal server error)
        }
-
        return response.status(200).send(posts); // success - send the posts!
    })
 });
@@ -142,13 +141,12 @@ router.get('/:id', getLimiter, function (request, response) {
  * Posts a comment.
  */
 router.post('/:id/comments', commentLimiter, function (req, res) {
-
     // find user
-    console.log(req.user.userID);
-    User.findById(req.user.userID, function (err, user) {
+       console.log(req.user.userID);
+       User.findById(req.user.userID, function (err, user) {
 
-        if (err) return res.status(500).send();
-        if (!user) return res.status(404).send();
+            if (err) return res.status(500).send();
+            if (!user) return res.status(404).send();
 
         // if found, then create comment
         Comment.create(
@@ -231,7 +229,7 @@ router.put('/:id', commentLimiter, function (req, res) {
  * Deletes a post.
  */
 router.delete('/:id', function (req, res) {
-    User.findOne({username: req.user.userID}, function (err, user) {
+    User.findById(req.user.userID, function (err, user) {
 
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
