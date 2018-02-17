@@ -187,7 +187,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
 router.put('/:id', commentLimiter, function (req, res) {
 
     // find user
-    User.findOne({username: req.user.user}, function (err, user) {
+    User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
 
@@ -201,12 +201,14 @@ router.put('/:id', commentLimiter, function (req, res) {
             }
 
             //if post author matches user, then perform update
+
             if (post.author.equals(user)) {
 
                 // for every property in req.body, check that the post schema also has that property (so people can't
                 // add new properties to our objects)
-                if (!(Object.keys(req.body).every( function(prop) { return post.hasOwnProperty(prop); } ))) {
-                    return res.status(400).send("Given object does not match object format");
+
+                if (!(Object.keys(req.body).every( function(prop) { return Post.schema.paths.hasOwnProperty(prop); } ))) {
+                    return res.status(400).send("Given object does not match db format");
                 }
 
                 // extend the post (copies values from req.body onto post) and save it
