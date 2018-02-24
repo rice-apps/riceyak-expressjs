@@ -52,11 +52,11 @@ router.get('/', function (req, res) {
                                 });
                                 // here, we create a token with the user's info as its payload.
                                 // authSucceded contains: { user: <username>, attributes: <attributes>}
-                                var token = jwt.sign({ data: authSucceded, userID: newUser._id }, config.secret);
+                                var token = jwt.sign({ data: authSucceded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
                                 sendJSON(res, newUser._id, authSucceded.user, token);
                             });
                         } else {
-                            var token = jwt.sign({ data: authSucceded, userID: user._id }, config.secret);
+                            var token = jwt.sign({ data: authSucceded, userID: user._id, is_admin: user.is_admin }, config.secret);
                             sendJSON(res, user._id, authSucceded.user, token);
                         }
                     });

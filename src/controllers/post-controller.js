@@ -7,6 +7,7 @@ var router = express.Router();
 var Post = require('../models/post');
 var User = require('../models/user');
 var Comment = require('../models/comment');
+var Report = require('../models/report');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
@@ -142,7 +143,6 @@ router.get('/:id', getLimiter, function (request, response) {
  */
 router.post('/:id/comments', commentLimiter, function (req, res) {
     // find user
-       console.log(req.user.userID);
        User.findById(req.user.userID, function (err, user) {
 
             if (err) return res.status(500).send();
@@ -180,6 +180,47 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
     });
 });
 
+/**
+ * Posts a report.
+ */
+router.post('/:id/reports',function (req, res)  {
+    User.findById(req.user.userID, function(err, user){
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
+        Report.create(
+            {
+                reason: req.body.reason,
+                author: user,
+                post: req.body.post_id,
+                reviewed: false
+            }, function (err) {
+                if (err) return res.status(500).send();
+                return res.status(200).send();
+            })
+    });
+});
+
+/**
+ * Get all the reports.
+ */
+router.get('/reports', function (req, res) {
+    User.findById(req.user.userID, function (err, user) {
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
+
+        if (user.is_admin) {
+            Report.find({}).exec(function (err, reports) {
+                if (err) {
+                    return res.status(500).send();
+                }
+                return res.status(200).send(reports)
+            });
+        }
+        else {
+            return res.status(401).send();
+        }
+    })
+});
 
 /**
  * Updates a post given a new post state
