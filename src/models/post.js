@@ -15,7 +15,7 @@ var PostSchema = new mongoose.Schema({
 var populate = function (next) {
     this.populate('author');
     this.populate('comments');
-    this.populate('votes');
+    // this.populate('votes');
     // calculate score every time a document is found or saved
     this.score = _.reduce(this.votes, function (memo, vote) {
         return memo + vote.vote
