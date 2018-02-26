@@ -8,7 +8,6 @@ var helmet = require('helmet');
 var db = require('./db');
 var postController = require('./controllers/post-controller');
 var authController = require('./controllers/auth-controller');
-var vote = require('./models/vote');
 
 /* Get an Express app instance */
 var app = express();

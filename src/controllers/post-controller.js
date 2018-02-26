@@ -236,7 +236,7 @@ router.delete('/:id', function (req, res) {
 
         Post.findById(req.params.id, function (err, post) {
 
-            if (err) return res.status(500).send();
+            if (err) return res.status(500).send(err);
 
             if (!post) return res.status(404).send();
 
