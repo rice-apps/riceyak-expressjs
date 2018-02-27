@@ -41,7 +41,7 @@ router.get('/', function (req, res) {
         if (authSucceeded) {
 
           // see if this netID exists as a user already. if not, create one.
-          // we find the SHA256 hash of the username, because usernames are stored as hashes for security
+          // we find the SHA256 hash of the username, because usernames are stored as hashes for security.
           var hashedUsername = shajs('sha256').update(authSucceeded.user).digest('hex');
 
           User.findOne({ username: hashedUsername }, function (err, user) {
@@ -49,11 +49,7 @@ router.get('/', function (req, res) {
 
             // if the user does not exist, create a new one
             if (!user) {
-
-              // hash the username we got from the CAS server and create the user with this hash
-              var hashedNewUsername = shajs('sha256').update(authSucceeded.user).digest('hex');
-
-              User.create({ username: hashedNewUsername }, function (err, newUser) {
+              User.create({ username: hashedUsername }, function (err, newUser) {
                 if (err) return res.status(500);
 
                 // create their avatar URL
