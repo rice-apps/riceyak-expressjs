@@ -8,15 +8,16 @@ var PostSchema = new mongoose.Schema({
     date: Date,
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' } ],
-    // votes: {}
-    votes: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number}]
-}, { versionKey: false });
+    votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
+    reacts: {}
+}, { versionKey: false, minimize: false });
 
 var populate = function (next) {
     this.populate('author');
     this.populate('comments');
-    this.populate('votes');
-    // calculate score every time a document is found or saved
+    //this.populate('votes');
+    //this.populate('reacts')
+    //calculate score every time a document is found or saved
     this.score = _.reduce(this.votes, function (memo, vote) {
         return memo + vote.vote
     }, 0);
