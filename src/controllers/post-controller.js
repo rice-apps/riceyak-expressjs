@@ -53,7 +53,53 @@ router.get('/', getLimiter,  function (request, response) {
    })
 });
 
+router.put('/:post_id/voteComment', function (req, res) {
+    // check if vote value is valid
+    if (req.body.vote > 1 || req.body.vote < -1) {
+        return res.status(400).send("Vote value out of bounds");
+    }
 
+    // find user
+    User.findById(req.user.userID, function (err, user) {
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
+
+        // find post
+        Post.findById(req.params.post_id, function (err, post) {
+            if (err) return res.status(500).send();
+            if (!post) return res.status(404).send();
+
+
+
+            Comment.findById(req.body.comment_id, function (err, comment) {
+                if (err) return res.status(500).send();
+                if (!comment) return res.status(404).send();
+
+                // find index of vote in vote array where vote user equals the requester; else -1
+                var idx = _.findIndex(comment.votes, function (v) {
+                    if (v.user.equals(user._id)) {
+                        return true;
+                    }
+                });
+
+                // if no current vote for this user in vote array, create new; else update the vote
+                if (idx == -1) {
+                    comment.votes.push({ user: user, vote: req.body.vote });
+                } else {
+                    comment.votes[idx].vote = req.body.vote
+                }
+
+                comment.save(function (err, newComment) {
+                    if (err) return res.status(500).send();
+                    Post.findById(req.params.post_id, function (err, updatedPost) {
+                        if (err) return res.status(500).send();
+                        return res.status(200).send(updatedPost);
+                    });
+                });
+            });
+        });
+    });
+});
 /**
  * Vote on a post.
  */
@@ -86,6 +132,7 @@ router.put('/:post_id/vote', getLimiter, function (req, res) {
             } else {
                 post.votes[idx].vote = req.body.vote
             }
+
 
             // save the post and send
             post.save(function (err, newPost) {
