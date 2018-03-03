@@ -9,12 +9,13 @@ var PostSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' } ],
     votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
-    reacts: {}
+    reacts: {type: mongoose.Schema.Types.Mixed}
 }, { versionKey: false, minimize: false });
 
 var populate = function (next) {
     this.populate('author');
     this.populate('comments');
+    //this.populate('reacts');
     // this.populate('votes');
     // calculate score every time a document is found or saved
     this.score = _.reduce(this.votes, function (memo, vote) {

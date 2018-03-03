@@ -118,15 +118,14 @@ router.post('/', postLimiter, function (req, res) {
             author: user,
             date: Date.now(),
             comments: [],
-            votes: {},
+            votes: [],
             reacts: {}
         }, function (err, post) {
-            if (err){
+            if (err) {
                 console.log("could not create post")
                 return res.status(500).send("could not create post");
 
             }
-            console.log(post)
             return res.status(200).send(post);
         });
     })
@@ -276,7 +275,10 @@ router.put('/:id/reacts', function(req, res){
         if (!user) return res.status(404).send("could not find user");
 
         Post.findById(req.params.id, function (err, post) {
-            if (err) return res.status(500).send("internal db error");
+            if (err){
+                console.log(err)
+                return res.status(500).send("internal db error");
+            }
             if (!post) return res.status(404).send("could not find post");
 
             react = req.body.react;
@@ -286,9 +288,19 @@ router.put('/:id/reacts', function(req, res){
                return res.status(404).send("not valid react")
             };
 
-            //add react to post's react map
-            post.reacts[user._id]={name: react,
-                                   css: validReacts[react]}
+            //check if same react is already in react map; if so, delete
+            if(post.reacts.hasOwnProperty(user._id) && post.reacts[user._id].name == react){
+                delete post.reacts[user._id]
+            }
+            else{
+                //add react to post's react map
+                post.reacts[user._id]={
+                    name: react,
+                    css: validReacts[react]
+                }
+            }
+
+            post.markModified('reacts')
 
             //save post and send to front end
             post.save(function (err, post) {
@@ -303,4 +315,17 @@ router.get('/react/retrieve', function(req, res){
     return res.status(200).send(JSON.stringify(validReacts));
 });
 
+router.get('/:id/reacts', function (req,res) {
+    Post.findById(req.params.id, function (err, post) {
+        if (err){
+            console.log(err)
+            return res.status(500).send("internal db error");
+        }
+        if (!post) return res.status(404).send("could not find post");
+
+        return res.status(200).send(JSON.stringify(post.reacts))
+
+    })
+
+})
 module.exports = router;
