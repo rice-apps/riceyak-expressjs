@@ -85,7 +85,11 @@ router.put('/:post_id/vote', getLimiter, function (req, res) {
             if (!post) return res.status(404).send();
 
             // find index of vote in vote array where vote user equals the requester; else -1
-            val = post.votes.get();
+            var idx = _.findIndex(post.votes, function (v) {
+                if (v.user.equals(user._id)) {
+                    return true;
+                }
+            });
 
             // if no current vote for this user in vote array, create new; else update the vote
             if (idx == -1) {
