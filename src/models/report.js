@@ -9,6 +9,7 @@ var ReportSchema = new mongoose.Schema({
 
 var populate = function (next) {
     this.populate('author');
+    this.populate('post');
     next();
 };
 

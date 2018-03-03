@@ -7,6 +7,7 @@ var RateLimit = require('express-rate-limit');
 var db = require('./db');
 var postController = require('./controllers/post-controller');
 var authController = require('./controllers/auth-controller');
+var reportController = require('./controllers/report-controller');
 var vote = require('./models/vote');
 
 /* Get an Express app instance */
@@ -24,6 +25,7 @@ app.use(bodyParser.json());
 /* Declare our routes */
 app.use('/api/posts', postController);
 app.use('/api/auth', authController);
+app.use('/api/reports', reportController);
 
 /* Set up global rate limiting */
 app.enable('trust proxy');
