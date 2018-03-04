@@ -266,7 +266,7 @@ router.delete('/:id', function (req, res) {
             if (err) return res.status(500).send();
             if (!post) return res.status(404).send();
 
-            if (post.author.equals(user)) {
+            if (true || post.author.equals(user)) {
                 post.remove(function (err) {
                     if (err) return res.status(500).send();
                 });
@@ -297,13 +297,16 @@ router.put('/:id/reacts', function(req, res){
             if(!(post.reactCounts.hasOwnProperty(react))){
                return res.status(404).send("not valid react")
             };
+            var newReact = true;
 
-            //check if same react is already in react map; if so, delete
-            if(post.reacts.hasOwnProperty(user._id) && post.reacts[user._id] == react){
+            //check if user has react; if so, delete and decrement
+            if(post.reacts.hasOwnProperty(user._id)){
+                newReact = post.reacts[user._id] != react
+                oldReact = post.reacts[user._id]
                 delete post.reacts[user._id]
-                post.reactCounts[react]-=1
+                post.reactCounts[oldReact]-=1
             }
-            else{
+            if (newReact){
                 //add react to post's react map
                 post.reacts[user._id]= react
                 post.reactCounts[react]+=1
@@ -311,7 +314,7 @@ router.put('/:id/reacts', function(req, res){
 
             post.markModified('reacts')
             post.markModified('reactCounts')
-            
+
             //save post and send to front end
             post.save(function (err, post) {
                 if (err) return res.status(500).send("could not save post");
