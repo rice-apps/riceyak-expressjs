@@ -1,6 +1,14 @@
 var mongoose = require('mongoose');
 var _ = require('underscore');
 
+var validReacts = {
+    "angry": 0,
+    "love":  0,
+    "wow":  0,
+    "funny":  0,
+    "sad":  0
+};
+
 var PostSchema = new mongoose.Schema({
     title: String,
     body: String,
@@ -9,8 +17,10 @@ var PostSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' } ],
     votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
-    reacts: {type: mongoose.Schema.Types.Mixed}
+    reacts: {type: mongoose.Schema.Types.Mixed},
+    reactCounts: {type: mongoose.Schema.Types.Mixed}
 }, { versionKey: false, minimize: false });
+
 
 var populate = function (next) {
     this.populate('author');
