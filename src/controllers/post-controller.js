@@ -311,7 +311,7 @@ router.put('/:id/reacts', function(req, res){
 
             post.markModified('reacts')
             post.markModified('reactCounts')
-            console.log(post)
+            
             //save post and send to front end
             post.save(function (err, post) {
                 if (err) return res.status(500).send("could not save post");
