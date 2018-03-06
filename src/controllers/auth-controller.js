@@ -61,13 +61,13 @@ router.get('/', function (req, res) {
 
                 // here, we create a token with the user's info as its payload.
                 // authSucceded contains: { user: <username>, attributes: <attributes>}
-                var token = jwt.sign({data: authSucceeded, userID: newUser._id}, config.secret);
+                var token = jwt.sign({data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
                 sendJSON(res, newUser._id, token, newUser.avatar_url, true);
               });
 
             // if they do exist, create a token with the user's info
             } else {
-              var token = jwt.sign({data: authSucceeded, userID: user._id}, config.secret);
+              var token = jwt.sign({data: authSucceeded, userID: user._id, is_admin: user.is_admin}, config.secret);
               sendJSON(res, user._id, token, user.avatar_url, false);
             }
           });
@@ -101,6 +101,5 @@ var sendJSON = function (res, userID, token, avatarURL, isNew) {
     }
   });
 };
-
 
 module.exports = router;

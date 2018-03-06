@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var RateLimit = require('express-rate-limit');
 var _ = require('underscore');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 var Post = require('../models/post');
 var User = require('../models/user');
@@ -10,6 +11,15 @@ var Comment = require('../models/comment');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
+
+Map.prototype.setSafe = function(key, item) {
+    if(typeof key == { type: mongoose.Schema.Types.ObjectId, ref: 'User' }) {
+        this.set(key, item);
+    } else {
+        throw 'Invalid!';
+    }
+};
+
 
 // TODO - comment the dev limit values out
 // TODO - add maxlength to object schemas (post title: 100, post body: 10000, comment: 1000) and return error
@@ -104,13 +114,22 @@ router.post('/', postLimiter, function (req, res) {
     User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
-
+        var reactCountsTemplate = {
+            "angry": 0,
+            "love":  0,
+            "wow":  0,
+            "funny":  0,
+            "sad":  0
+        }
         Post.create({
             title: req.body.title,
             body: req.body.body,
             author: user,
             date: Date.now(),
-            comments: []
+            comments: [],
+            votes: [],
+            reacts: {},
+            reactCounts: reactCountsTemplate
         }, function (err, post) {
             if (err) return res.status(500).send();
             return res.status(200).send(post);
@@ -142,9 +161,7 @@ router.get('/:id', getLimiter, function (request, response) {
  */
 router.post('/:id/comments', commentLimiter, function (req, res) {
     // find user
-       console.log(req.user.userID);
        User.findById(req.user.userID, function (err, user) {
-
             if (err) return res.status(500).send();
             if (!user) return res.status(404).send();
 
@@ -180,7 +197,6 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
     });
 });
 
-
 /**
  * Updates a post given a new post state
  */
@@ -214,6 +230,7 @@ router.put('/:id', commentLimiter, function (req, res) {
                 // extend the post (copies values from req.body onto post) and save it
                 post = _.extend(post, req.body);
                 post.save(function (err, post) {
+                    if (err) return res.status(500).send();
                     return res.status(200).send(post);
                 });
 
@@ -236,8 +253,7 @@ router.delete('/:id', function (req, res) {
 
         Post.findById(req.params.id, function (err, post) {
 
-            if (err) return res.status(500).send(err);
-
+            if (err) return res.status(500).send();
             if (!post) return res.status(404).send();
 
             if (post.author.equals(user)) {
@@ -251,6 +267,80 @@ router.delete('/:id', function (req, res) {
             }
         })
     })
+});
+
+router.put('/:id/reacts', function(req, res){
+    User.findById(req.user.userID, function (err, user) {
+        if (err) return res.status(500).send("internal db error");
+        if (!user) return res.status(404).send("could not find user");
+
+        Post.findById(req.params.id, function (err, post) {
+            if (err){
+                console.log(err)
+                return res.status(500).send("internal db error");
+            }
+            if (!post) return res.status(404).send("could not find post");
+
+            react = req.body.react;
+
+            //check if react is valid
+            if(!(post.reactCounts.hasOwnProperty(react))){
+               return res.status(404).send("not valid react")
+            };
+            var newReact = true;
+
+            //check if user has react; if so, delete and decrement
+            if(post.reacts.hasOwnProperty(user._id)){
+                newReact = post.reacts[user._id] != react
+                oldReact = post.reacts[user._id]
+                delete post.reacts[user._id]
+                post.reactCounts[oldReact]-=1
+            }
+            if (newReact){
+                //add react to post's react map
+                post.reacts[user._id]= react
+                post.reactCounts[react]+=1
+            }
+
+            post.markModified('reacts')
+            post.markModified('reactCounts')
+
+            //save post and send to front end
+            post.save(function (err, post) {
+                if (err) return res.status(500).send("could not save post");
+                return res.status(200).send(post)
+            })
+        });
+    })
+})
+
+//get map of reacts to css and counts
+router.get('/:id/reacts/counts', function(req, res){
+    Post.findById(req.params.id, function (err, post) {
+        if(err){
+            console.log(err)
+            return res.status(500).send('internal db error')
+        }
+        if(!post){
+            return res.status(404).send('could not find post')
+        }
+        return res.status(200).send(JSON.stringify(post.reactCounts));
+    })
+
+});
+//get map of users to reacts
+router.get('/:id/reacts', function (req,res) {
+    Post.findById(req.params.id, function (err, post) {
+        if (err){
+            console.log(err)
+            return res.status(500).send("internal db error");
+        }
+        if (!post) return res.status(404).send("could not find post");
+
+        return res.status(200).send(JSON.stringify(post.reacts))
+
+    })
+
 });
 
 module.exports = router;

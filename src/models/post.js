@@ -1,6 +1,14 @@
 var mongoose = require('mongoose');
 var _ = require('underscore');
 
+var validReacts = {
+    "angry": 0,
+    "love":  0,
+    "wow":  0,
+    "funny":  0,
+    "sad":  0
+};
+
 var PostSchema = new mongoose.Schema({
     title: String,
     body: String,
@@ -8,13 +16,16 @@ var PostSchema = new mongoose.Schema({
     date: Date,
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     comments: [ { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' } ],
-    votes: [ { user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number } ]
-}, { versionKey: false });
+    votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
+    reacts: {type: mongoose.Schema.Types.Mixed},
+    reactCounts: {type: mongoose.Schema.Types.Mixed}
+}, { versionKey: false, minimize: false });
+
 
 var populate = function (next) {
     this.populate('author');
     this.populate('comments');
-
+    this.populate('votes');
     // calculate score every time a document is found or saved
     this.score = _.reduce(this.votes, function (memo, vote) {
         return memo + vote.vote
