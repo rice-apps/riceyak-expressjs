@@ -2,7 +2,8 @@ var mongoose = require('mongoose');
 
 var UserSchema = new mongoose.Schema({
     username: String,
-    avatar_url: String
+    avatar_url: String,
+    is_admin: Boolean
 }, { versionKey: false });
 
 UserSchema.set('toJSON', {

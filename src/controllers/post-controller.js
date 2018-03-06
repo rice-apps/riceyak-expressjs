@@ -168,9 +168,7 @@ router.get('/:id', getLimiter, function (request, response) {
  */
 router.post('/:id/comments', commentLimiter, function (req, res) {
     // find user
-    User.findById(req.user.userID, function (err, user) {
-
-
+       User.findById(req.user.userID, function (err, user) {
             if (err) return res.status(500).send();
             if (!user) return res.status(404).send();
 
@@ -205,7 +203,6 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
         );
     });
 });
-
 
 /**
  * Updates a post given a new post state
