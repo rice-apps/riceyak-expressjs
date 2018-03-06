@@ -9,7 +9,6 @@ var Post = require('../models/post');
 var User = require('../models/user');
 var Comment = require('../models/comment');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
-var validReacts = require('../models/react'); // load valid reacts
 router.use(authMiddleWare);
 router.use(bodyParser.json());
 
@@ -115,7 +114,13 @@ router.post('/', postLimiter, function (req, res) {
     User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
-
+        var reactCountsTemplate = {
+            "angry": 0,
+            "love":  0,
+            "wow":  0,
+            "funny":  0,
+            "sad":  0
+        }
         Post.create({
             title: req.body.title,
             body: req.body.body,
@@ -123,7 +128,8 @@ router.post('/', postLimiter, function (req, res) {
             date: Date.now(),
             comments: [],
             votes: [],
-            reacts: {}
+            reacts: {},
+            reactCounts: reactCountsTemplate
         }, function (err, post) {
             if (err) {
                 console.log("could not create post")
@@ -260,7 +266,7 @@ router.delete('/:id', function (req, res) {
             if (err) return res.status(500).send();
             if (!post) return res.status(404).send();
 
-            if (post.author.equals(user)) {
+            if (true || post.author.equals(user)) {
                 post.remove(function (err) {
                     if (err) return res.status(500).send();
                 });
@@ -288,23 +294,26 @@ router.put('/:id/reacts', function(req, res){
             react = req.body.react;
 
             //check if react is valid
-            if(!(validReacts.hasOwnProperty(react))){
+            if(!(post.reactCounts.hasOwnProperty(react))){
                return res.status(404).send("not valid react")
             };
+            var newReact = true;
 
-            //check if same react is already in react map; if so, delete
-            if(post.reacts.hasOwnProperty(user._id) && post.reacts[user._id].name == react){
+            //check if user has react; if so, delete and decrement
+            if(post.reacts.hasOwnProperty(user._id)){
+                newReact = post.reacts[user._id] != react
+                oldReact = post.reacts[user._id]
                 delete post.reacts[user._id]
+                post.reactCounts[oldReact]-=1
             }
-            else{
+            if (newReact){
                 //add react to post's react map
-                post.reacts[user._id]={
-                    name: react,
-                    css: validReacts[react]
-                }
+                post.reacts[user._id]= react
+                post.reactCounts[react]+=1
             }
 
             post.markModified('reacts')
+            post.markModified('reactCounts')
 
             //save post and send to front end
             post.save(function (err, post) {
@@ -315,10 +324,21 @@ router.put('/:id/reacts', function(req, res){
     })
 })
 
-router.get('/react/retrieve', function(req, res){
-    return res.status(200).send(JSON.stringify(validReacts));
-});
+//get map of reacts to css and counts
+router.get('/:id/reacts/counts', function(req, res){
+    Post.findById(req.params.id, function (err, post) {
+        if(err){
+            console.log(err)
+            return res.status(500).send('internal db error')
+        }
+        if(!post){
+            return res.status(404).send('could not find post')
+        }
+        return res.status(200).send(JSON.stringify(post.reactCounts));
+    })
 
+});
+//get map of users to reacts
 router.get('/:id/reacts', function (req,res) {
     Post.findById(req.params.id, function (err, post) {
         if (err){
@@ -332,4 +352,5 @@ router.get('/:id/reacts', function (req,res) {
     })
 
 })
+
 module.exports = router;
