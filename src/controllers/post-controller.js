@@ -263,7 +263,7 @@ router.delete('/:id', function (req, res) {
             if (err) return res.status(500).send();
             if (!post) return res.status(404).send();
 
-            if (true || post.author.equals(user)) {
+            if (post.author.equals(user)) {
                 post.remove(function (err) {
                     if (err) return res.status(500).send();
                 });
