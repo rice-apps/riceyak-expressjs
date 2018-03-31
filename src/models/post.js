@@ -26,7 +26,7 @@ var PostSchema = new mongoose.Schema({
   votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
   reacts: {type: mongoose.Schema.Types.Mixed},
   reactCounts: {type: mongoose.Schema.Types.Mixed}
-}, {versionKey: false, minimize: false});
+}, { versionKey: false, minimize: false });
 
 
 var populate = function (next) {
