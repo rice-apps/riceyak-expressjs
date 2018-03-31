@@ -1,8 +1,12 @@
 var mongoose = require('mongoose');
 //
 var CommentSchema = new mongoose.Schema({
-    body: String,
-    score: {type: Number, default: 0},
+    body: {
+      type: String,
+      maxlength: 200,
+      required: true
+    },
+    score: { type: Number, default: 0 },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     date: Date
 }, { versionKey: false });
