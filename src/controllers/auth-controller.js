@@ -42,7 +42,7 @@ router.get('/', function (req, res) {
 
           // see if this netID exists as a user already. if not, create one.
           // we find the SHA256 hash of the username, because usernames are stored as hashes for security.
-          var hashedUsername = shajs('sha256').update(authSucceeded.user).digest('hex');
+          var hashedUsername = shajs('sha256').update(config.salt + authSucceeded.user).digest('hex');
 
           User.findOne({ username: hashedUsername }, function (err, user) {
             if (err) return res.status(500);
@@ -61,7 +61,7 @@ router.get('/', function (req, res) {
 
                 // here, we create a token with the user's info as its payload.
                 // authSucceded contains: { user: <username>, attributes: <attributes>}
-                var token = jwt.sign({data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
+                var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
                 sendJSON(res, newUser._id, token, newUser.avatar_url, true);
               });
 
