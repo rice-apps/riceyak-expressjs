@@ -50,4 +50,31 @@ router.get('/', function (req, res) {
     })
 });
 
+/**
+ * Review a report
+ */
+router.put('/',function (req, res)  {
+    User.findById(req.user.userID, function(err, user){
+        if (err) return res.status(500).send();
+        if (!user) return res.status(404).send();
+
+        if(user.is_admin){
+            Report.findById(req.params._id, function (err, report){
+                report.reviewed = true;
+                if(req.result===true){
+                    Post.findById(req.post._id), function (err,post) {
+                        post.removed = true;
+                    };
+                    post.save(function(err){
+                        if (err) return res.status(500).send()
+                    })
+                }
+                report.save(function (err) {
+                    if (err) return res.status(500).send();
+                    return res.status(200).send(report);
+                })
+            })
+        }})
+});
+
 module.exports = router;
