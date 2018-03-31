@@ -93,8 +93,8 @@ router.post('/', function (req, res) {
             "wow":  0,
             "funny":  0,
             "sad":  0
-        }
-        Post.create({
+        };
+        var newPost = new Post({
             title: req.body.title,
             body: req.body.body,
             author: user,
@@ -103,10 +103,15 @@ router.post('/', function (req, res) {
             votes: [],
             reacts: {},
             reactCounts: reactCountsTemplate
-        }, function (err, post) {
-            if (err) return res.status(500).send();
-            return res.status(200).send(post);
         });
+        newPost.save(function (err, post) {
+            if (err && (err.errors['title'] || err.errors['body'])) {
+                return res.status(400).send('ya shits too long bruv');
+            } else if (err) {
+                return res.status(500).send();
+            }
+            return res.status(200).send(post);
+        })
     })
 
 });
