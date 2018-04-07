@@ -4,6 +4,7 @@ var router = express.Router();
 
 var User = require('../models/user');
 var Report = require('../models/report');
+var Post = require('../models/post');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
@@ -59,16 +60,15 @@ router.put('/',function (req, res)  {
         if (!user) return res.status(404).send();
 
         if(user.is_admin){
-            Report.findById(req.params._id, function (err, report){
+            Report.findById(req.body.report._id, function (err, report){
                 report.reviewed = true;
-                if(req.result===true){
-                    Post.findById(req.post._id), function (err,post) {
+                console.log("here");
+                if(req.body.result===false){
+                    Post.findById(req.body.report.post._id, function (err,post) {
                         post.removed = true;
-                    };
-                    post.save(function(err){
-                        if (err) return res.status(500).send()
-                    })
-                }
+                        post.save(function(err){
+                            if (err) return res.status(500).send()
+                        })})}
                 report.save(function (err) {
                     if (err) return res.status(500).send();
                     return res.status(200).send(report);
