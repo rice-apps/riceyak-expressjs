@@ -20,36 +20,10 @@ Map.prototype.setSafe = function(key, item) {
     }
 };
 
-
-// TODO - comment the dev limit values out
-// TODO - add maxlength to object schemas (post title: 100, post body: 10000, comment: 1000) and return error
-
-/* Set up rate limiting */
-var postLimiter = new RateLimit({
-    windowMs: 15*60*1000, // 15 min window
-    max: 500, // maximum 7 posts per window
-    delayAfter: 0 // start delaying requests after 3 posts in window
-    // delayMs: 1000 // delay by 1 second per post after delayAfter limit reached
-});
-
-var commentLimiter = new RateLimit({
-    windowMs: 5*60*1000, // 5 minute window
-    max: 500, // max 10 comments per window
-    delayAfter: 0 // 5
-    // delayMs: 1000
-});
-
-var getLimiter = new RateLimit({
-    windowMs: 3*60*1000, // 3 minute window
-    max: 3*60, // maximum 180 (1/sec)
-    delayAfter: 0
-});
-
-
 /**
  * Returns all posts.
  */
-router.get('/', getLimiter,  function (request, response) {
+router.get('/',  function (request, response) {
    //'find' returns all objects matching the given query - and all objects match the empty query "{}".
 
    // Most db operations take a function as their second argument, which is called after the query completes. This
@@ -114,7 +88,7 @@ router.put('/:post_id/voteComment', function (req, res) {
 /**
  * Vote on a post.
  */
-router.put('/:post_id/vote', getLimiter, function (req, res) {
+router.put('/:post_id/vote', function (req, res) {
     // check if vote value is valid
     if (req.body.vote > 1 || req.body.vote < -1) {
         return res.status(400).send("Vote value out of bounds");
@@ -157,7 +131,7 @@ router.put('/:post_id/vote', getLimiter, function (req, res) {
 /**
  * Posts a post.
  */
-router.post('/', postLimiter, function (req, res) {
+router.post('/', function (req, res) {
     User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
@@ -193,7 +167,7 @@ router.post('/', postLimiter, function (req, res) {
 /**
  * Gets a single post.
  */
-router.get('/:id', getLimiter, function (request, response) {
+router.get('/:id', function (request, response) {
     Post.findById(request.params.id, function (err, post) {
         if (err) {
             console.log("cant find post")
@@ -213,7 +187,7 @@ router.get('/:id', getLimiter, function (request, response) {
 /**
  * Posts a comment.
  */
-router.post('/:id/comments', commentLimiter, function (req, res) {
+router.post('/:id/comments', function (req, res) {
     // find user
        User.findById(req.user.userID, function (err, user) {
             if (err) return res.status(500).send();
@@ -254,7 +228,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
 /**
  * Updates a post given a new post state
  */
-router.put('/:id', commentLimiter, function (req, res) {
+router.put('/:id', function (req, res) {
 
     // find user
     User.findById(req.user.userID, function (err, user) {

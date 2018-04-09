@@ -2,7 +2,6 @@ var express = require('express');
 var morgan = require('morgan');
 var cors = require('cors');
 var bodyParser = require('body-parser');
-var RateLimit = require('express-rate-limit');
 var helmet = require('helmet');
 
 var db = require('./db');
@@ -32,10 +31,5 @@ app.use(helmet());
 
 /* Set up global rate limiting */
 app.enable('trust proxy');
-// var apiLimiter = new RateLimit({
-//     windowMs: 15*60*1000, // 15 min
-//     max: 100
-// });
-// app.use('/api', apiLimiter);
 
 module.exports = app;
