@@ -20,19 +20,29 @@ Map.prototype.setSafe = function (key, item) {
   }
 };
 
+/**
+ * Generates the "key" for the ratelimiter. The default uses IP addresses, but we can't because Rice only has a handful
+ * of outward-facing IPs. We use the user ID from the token.
+ */
+var keyGen = function (req) {
+  return req.user.userID;
+};
+
 var postLimiter = new RateLimit({
   windowMs: 30 * 60 * 1000, // 30 min window
-  max: 5, // maximum 7 posts per window
+  max: 10, // maximum 10 posts per window
   delayAfter: 0, // never delay
-  message: "You are creating too many posts. Try again later."
+  keyGenerator: keyGen
 });
 
 var commentLimiter = new RateLimit({
   windowMs: 30 * 60 * 1000,
   max: 50,
   delayAfter: 0,
-  message: "You are commenting too much. Try again later."
+  keyGenerator: keyGen
 });
+
+
 
 /**
  * Returns all posts.
