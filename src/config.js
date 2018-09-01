@@ -1,4 +1,5 @@
 if (process.env.NODE_ENV === 'prod') {
+  console.log("production!!")
   module.exports = {
     secret: 'TEST_SECRET',
     salt: 'TEST_SALT',

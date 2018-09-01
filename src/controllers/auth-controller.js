@@ -67,6 +67,9 @@ router.get('/', function (req, res) {
 
             // if they do exist, create a token with the user's info
             } else {
+              if(user.is_banned){
+                res.status(401).json({success: false,message: 'CAS authentication failed'})
+              }
               var token = jwt.sign({data: authSucceeded, userID: user._id, is_admin: user.is_admin}, config.secret);
               sendJSON(res, user._id, token, user.avatar_url, false);
             }

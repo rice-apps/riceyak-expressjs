@@ -28,13 +28,14 @@ var keyGen = function (req) {
   return req.user.userID;
 };
 
+/*
 var postLimiter = new RateLimit({
   windowMs: 30 * 60 * 1000, // 30 min window
   max: 10, // maximum 10 posts per window
   delayAfter: 0, // never delay
   keyGenerator: keyGen
 });
-
+*/
 var commentLimiter = new RateLimit({
   windowMs: 30 * 60 * 1000,
   max: 50,
@@ -48,6 +49,7 @@ var commentLimiter = new RateLimit({
  * Returns all posts.
  */
 router.get('/', function (request, response) {
+  console.log(request)
   //'find' returns all objects matching the given query - and all objects match the empty query "{}".
 
   // Most db operations take a function as their second argument, which is called after the query completes. This
@@ -154,7 +156,8 @@ router.put('/:post_id/vote', function (req, res) {
 /**
  * Posts a post.
  */
-router.post('/', postLimiter, function (req, res) {
+router.post('/', function (req, res) {
+  console.log(req)
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();

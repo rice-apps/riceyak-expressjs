@@ -13,9 +13,11 @@ router.use(bodyParser.json());
  * Posts a report.
  */
 router.post('/', function (req, res) {
+
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();
+
     Report.create(
       {
         reason: req.body.reason,

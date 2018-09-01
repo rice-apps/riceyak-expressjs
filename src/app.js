@@ -8,6 +8,7 @@ var db = require('./db');
 var postController = require('./controllers/post-controller');
 var authController = require('./controllers/auth-controller');
 var reportController = require('./controllers/report-controller');
+var userController = require('./controllers/user-controller')
 
 /* Get an Express app instance */
 var app = express();
@@ -25,11 +26,13 @@ app.use(bodyParser.json());
 app.use('/api/posts', postController);
 app.use('/api/auth', authController);
 app.use('/api/reports', reportController);
+app.use('/api/users', userController)
 
 /* Use helmet to set various HTTP headers for security */
 app.use(helmet());
 
 /* Set up global rate limiting */
 app.enable('trust proxy');
+//app.disable('etag');
 
 module.exports = app;
