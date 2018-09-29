@@ -11,7 +11,7 @@ var CommentSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     date: Date,
     votes: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number}]
-}, { versionKey: false });
+}, { versionKey: false, usePushEach: true });
 
 var populate = function (next) {
     this.populate('author');

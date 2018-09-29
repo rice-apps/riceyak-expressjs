@@ -49,7 +49,6 @@ var commentLimiter = new RateLimit({
  * Returns all posts.
  */
 router.get('/', function (request, response) {
-  console.log(request)
   //'find' returns all objects matching the given query - and all objects match the empty query "{}".
 
   // Most db operations take a function as their second argument, which is called after the query completes. This
@@ -207,7 +206,6 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();
-
     // if found, then create comment
     Comment.create(
       {
@@ -229,9 +227,9 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
             return res.status(404).send();
           }
 
-          // add comment and save
           post.comments.push(comment);
           post.save(function (err, post) {
+            console.log(err)
             return res.status(200).send(post);
           })
         });

@@ -27,7 +27,7 @@ var PostSchema = new mongoose.Schema({
   reacts: {type: mongoose.Schema.Types.Mixed},
   reactCounts: {type: mongoose.Schema.Types.Mixed},
   removed: {type: Boolean, default: false}
-}, { versionKey: false, minimize: false });
+}, { versionKey: false, minimize: false,  usePushEach: true});
 
 
 var populate = function (next) {
