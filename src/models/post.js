@@ -23,7 +23,7 @@ var PostSchema = new mongoose.Schema({
   date: Date,
   author: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
   comments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}],
-  votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
+  votes: {type: mongoose.Schema.Types.Mixed},
   reacts: {type: mongoose.Schema.Types.Mixed},
   reactCounts: {type: mongoose.Schema.Types.Mixed},
   removed: {type: Boolean, default: false}
@@ -33,11 +33,6 @@ var PostSchema = new mongoose.Schema({
 var populate = function (next) {
   this.populate('author');
   this.populate('comments');
-  this.populate('votes');
-  // calculate score every time a document is found or saved
-  this.score = _.reduce(this.votes, function (memo, vote) {
-    return memo + vote.vote
-  }, 0);
   next();
 };
 
@@ -45,4 +40,4 @@ PostSchema.pre('find', populate);
 PostSchema.pre('findOne', populate);
 PostSchema.pre('save', populate);
 
-module.exports = mongoose.model('Post', PostSchema);
+module.exports = mongoose.model('New_Post', PostSchema, "new_posts");
