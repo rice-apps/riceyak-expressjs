@@ -101,7 +101,7 @@ router.put('/:post_id/voteComment', function (req, res) {
           if (err) return res.status(500).send();
           Post.findById(req.params.post_id, function (err, updatedPost) {
             if (err) return res.status(500).send();
-            return res.status(200).send(updatedPost);
+            return res.status(200).send(Post.toClient(user._id, updatedPost));
           });
         });
       });
@@ -145,7 +145,7 @@ router.put('/:post_id/vote', function (req, res) {
       // save the post and send
       post.save(function (err, newPost) {
         if (err) res.status(500).send();
-        return res.status(200).send(newPost);
+        return res.status(200).send(Post.toClient(user._id, newPost));
       })
     })
   });
@@ -231,7 +231,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
           post.comments.push(comment);
           post.save(function (err, post) {
             console.log(err)
-            return res.status(200).send(post);
+            return res.status(200).send(Post.toClient(user._id, post));
           })
         });
       }
@@ -275,7 +275,7 @@ router.put('/:id', function (req, res) {
         post = _.extend(post, req.body);
         post.save(function (err, post) {
           if (err) return res.status(500).send();
-          return res.status(200).send(post);
+          return res.status(200).send(Post.toClient(user._id, post));
         });
 
       } else {
@@ -360,7 +360,7 @@ router.put('/:id/reacts', function (req, res) {
       //save post and send to front end
       post.save(function (err, post) {
         if (err) return res.status(500).send("could not save post");
-        return res.status(200).send(post)
+        return res.status(200).send(Post.toClient(user._id, post))
       })
     });
   })
