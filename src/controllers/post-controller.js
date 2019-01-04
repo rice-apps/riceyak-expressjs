@@ -156,7 +156,6 @@ router.put('/:post_id/vote', function (req, res) {
  * Posts a post.
  */
 router.post('/', function (req, res) {
-  console.log(req)
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();
@@ -168,6 +167,7 @@ router.post('/', function (req, res) {
       "sad": 0
     };
     Post.create({
+      _id: req.body.id,
       title: req.body.title,
       body: req.body.body,
       author: user,
@@ -178,6 +178,7 @@ router.post('/', function (req, res) {
       reactCounts: reactCountsTemplate
     }, function (err, post) {
       if (err) {
+        console.log(err)
         return res.status(500).send();
       }
       return res.status(200).send(post);
@@ -323,7 +324,6 @@ router.put('/:id/reacts', function (req, res) {
         return res.status(500).send("internal db error");
       }
       if (!post) return res.status(404).send("could not find post");
-
       react = req.body.react;
 
       //check if react is valid
@@ -332,7 +332,7 @@ router.put('/:id/reacts', function (req, res) {
       }
       ;
       var newReact = true;
-
+      
       //check if user has react; if so, delete and decrement
       if (post.reacts.hasOwnProperty(user._id)) {
         newReact = post.reacts[user._id] != react;

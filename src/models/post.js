@@ -10,6 +10,7 @@ var validReacts = {
 };
 
 var PostSchema = new mongoose.Schema({
+  _id: {type: String, index: true},
   title: {
     type: String,
     maxlength: 200,
@@ -26,7 +27,7 @@ var PostSchema = new mongoose.Schema({
   votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
   reacts: {type: mongoose.Schema.Types.Mixed},
   reactCounts: {type: mongoose.Schema.Types.Mixed},
-  removed: {type: Boolean, default: false}
+  removed: {type: Boolean, default: false},
 }, { versionKey: false, minimize: false,  usePushEach: true});
 
 
@@ -45,4 +46,5 @@ PostSchema.pre('find', populate);
 PostSchema.pre('findOne', populate);
 PostSchema.pre('save', populate);
 
-module.exports = mongoose.model('Post', PostSchema);
+Posts = mongoose.model('Post', PostSchema, "noush_posts")
+module.exports = Posts
