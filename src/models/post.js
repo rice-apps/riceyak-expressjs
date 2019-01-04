@@ -30,6 +30,30 @@ var PostSchema = new mongoose.Schema({
   removed: {type: Boolean, default: false},
 }, { versionKey: false, minimize: false,  usePushEach: true});
 
+PostSchema.statics.toClient = function(userID, post) {
+  userVote = 0
+  for (var i = 0; i < post.votes.length; i++) {
+    if (post.votes[i].user == user) {
+        userVote = votes[i].vote
+    }
+  }
+
+  return {
+    _id: post._id,
+    title: post.title,
+    body: post.body,
+    score: post.score,
+    data: post.date,
+    comments: post.comments,
+    userVote: userVote,
+    userReact: post.reacts[userID],
+    reactCounts: post.reactCounts
+  }
+}
+
+PostSchema.statics.toClientBatch = function(userID, posts) {
+  return posts.map((p, idx) => PostSchema.statics.toClient(userID, p))
+}
 
 var populate = function (next) {
   this.populate('author');
