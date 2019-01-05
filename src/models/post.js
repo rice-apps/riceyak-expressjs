@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var _ = require('underscore');
+var Comment = require('./comment')
 
 var validReacts = {
   "angry": 0,
@@ -33,18 +34,17 @@ var PostSchema = new mongoose.Schema({
 PostSchema.statics.toClient = function(userID, post) {
   userVote = 0
   for (var i = 0; i < post.votes.length; i++) {
-    if (post.votes[i].user == user) {
-        userVote = votes[i].vote
+    if (post.votes[i].user == userID) {
+        userVote = post.votes[i].vote
     }
   }
-
   return {
     _id: post._id,
     title: post.title,
     body: post.body,
     score: post.score,
     data: post.date,
-    comments: post.comments,
+    comments: Comment.toClientBatch(userID, post.comments),
     userVote: userVote,
     userReact: post.reacts[userID],
     reactCounts: post.reactCounts
