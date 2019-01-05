@@ -59,7 +59,7 @@ router.get('/', function (request, response) {
       //console.log(err)
       return response.status(500).send(); // db error (500 internal server error)
     }
-    return response.status(200).send(posts); // success - send the posts!
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
   })
 });
 
@@ -102,7 +102,7 @@ router.put('/:post_id/voteComment', function (req, res) {
           if (err) return res.status(500).send();
           Post.findById(req.params.post_id, function (err, updatedPost) {
             if (err) return res.status(500).send();
-            return res.status(200).send(updatedPost);
+            return res.status(200).send(Post.toClient(user._id, updatedPost));
           });
         });
       });
@@ -141,18 +141,15 @@ router.put('/:post_id/vote', function (req, res) {
       post.votes[user._id] = req.body.vote 
 
       // Update score 
-      if (req.body.vote != 0) { 
-        post.score += scoreChange; // For upvotes/downvotes: add difference b/t previous & current votes to total score 
-      } else { 
-        post.score += -1*previousVote // For undoing votes: just subtract previous vote 
-      }
-
+      post.score += (req.body.vote == 0) ? -1 * previousVote : scoreChange 
+      // For upvotes/downvotes: add difference b/t previous & current votes to total score 
+      // For undoing votes: just subtract previous vote 
+      
       post.markModified('votes');
-
       // save the post and send
       post.save(function (err, newPost) {
         if (err) res.status(500).send();
-        return res.status(200).send(newPost);
+        return res.status(200).send(Post.toClient(user._id, newPost));
       })
     })
   });
@@ -174,6 +171,7 @@ router.post('/', function (req, res) {
       "sad": 0
     };
     Post.create({
+      _id: req.body.id,
       title: req.body.title,
       body: req.body.body,
       author: user,
@@ -184,10 +182,9 @@ router.post('/', function (req, res) {
       reactCounts: reactCountsTemplate
     }, function (err, post) {
       if (err) {
-        //console.log(err)
         return res.status(500).send();
       }
-      return res.status(200).send(post);
+      return res.status(200).send(Post.toClient(user._id, post));
     });
   })
 });
@@ -200,7 +197,7 @@ router.get('/:id', function (request, response) {
   Post.findById(request.params.id, function (err, post) {
     if (err) return response.status(500).send();
     if (!post) return response.status(404).send();
-    return response.status(200).send(post);
+    return response.status(200).send(Post.toClient(request.user.userID, post));
   })
 });
 
@@ -235,7 +232,8 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
 
           post.comments.push(comment);
           post.save(function (err, post) {
-            return res.status(200).send(post);
+            console.log(err)
+            return res.status(200).send(Post.toClient(user._id, post));
           })
         });
       }
@@ -279,7 +277,7 @@ router.put('/:id', function (req, res) {
         post = _.extend(post, req.body);
         post.save(function (err, post) {
           if (err) return res.status(500).send();
-          return res.status(200).send(post);
+          return res.status(200).send(Post.toClient(user._id, post));
         });
 
       } else {
@@ -327,17 +325,24 @@ router.put('/:id/reacts', function (req, res) {
         return res.status(500).send("internal db error");
       }
       if (!post) return res.status(404).send("could not find post");
-
       react = req.body.react;
+      console.log(react)
+      console.log(req.params.id)
 
-      //check if react is valid
-      if (!(post.reactCounts.hasOwnProperty(react))) {
-        return res.status(404).send("not valid react")
-      }
-      ;
-      var newReact = true;
-
+      
+      console.log(react)
       //check if user has react; if so, delete and decrement
+      if (react == "none") {
+        console.log("here")
+        oldReact = post.reacts[user._id];
+        post.reactCounts[oldReact] -= 1;
+      }
+      else {
+        post.reactCounts[react] += 1;
+      }
+      post.reacts[user._id] = react;
+
+      /*
       if (post.reacts.hasOwnProperty(user._id)) {
         newReact = post.reacts[user._id] != react;
         oldReact = post.reacts[user._id];
@@ -349,14 +354,14 @@ router.put('/:id/reacts', function (req, res) {
         post.reacts[user._id] = react;
         post.reactCounts[react] += 1;
       }
-
+      */
       post.markModified('reacts');
       post.markModified('reactCounts');
 
       //save post and send to front end
       post.save(function (err, post) {
         if (err) return res.status(500).send("could not save post");
-        return res.status(200).send(post)
+        return res.status(200).send(Post.toClient(user._id, post))
       })
     });
   })
