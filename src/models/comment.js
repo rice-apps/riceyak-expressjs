@@ -13,6 +13,27 @@ var CommentSchema = new mongoose.Schema({
     votes: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number}]
 }, { versionKey: false, usePushEach: true });
 
+CommentSchema.statics.toClient = function(userID, comment) {
+    userVote = 0
+    for (var i = 0; i < comment.votes.length; i++) {
+      if (commentt.votes[i].user == userID) {
+          userVote = comment.votes[i].vote
+      }
+    }
+  
+    return {
+      _id: comment._id,
+      body: comment.body,
+      score: comment.score,
+      data: comment.date,
+      userVote: userVote,
+    }
+  }
+  
+CommentSchema.statics.toClientBatch = function(userID, comments) {
+    return comments.map((c, idx) => CommentSchema.statics.toClient(userID, c))
+  }
+  
 var populate = function (next) {
     this.populate('author');
     // calculate score every time a document is found or saved
