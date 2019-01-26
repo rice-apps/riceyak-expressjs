@@ -325,18 +325,11 @@ router.put('/:id/reacts', function (req, res) {
       }
       if (!post) return res.status(404).send("could not find post");
       react = req.body.react;
-      console.log(react)
-      console.log(req.params.id)
-
-      
-      console.log(react)
+      oldReact = post.reacts[user._id];
+      post.reactCounts[oldReact] -= 1;
+ 
       //check if user has react; if so, delete and decrement
-      if (react == "none") {
-        console.log("here")
-        oldReact = post.reacts[user._id];
-        post.reactCounts[oldReact] -= 1;
-      }
-      else {
+      if (react != "none") {
         post.reactCounts[react] += 1;
       }
       post.reacts[user._id] = react;
