@@ -54,8 +54,9 @@ router.get('/', function (request, response) {
   // Most db operations take a function as their second argument, which is called after the query completes. This
   // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
   // the second argument (posts) contains our results.
-  Post.find({}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
+  Post.find().where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
     if (err) {
+      //console.log(err)
       return response.status(500).send(); // db error (500 internal server error)
     }
     return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
@@ -120,7 +121,7 @@ router.put('/:post_id/vote', function (req, res) {
 
   // find user
   User.findById(req.user.userID, function (err, user) {
-    if (err) return res.status(500).send();
+    if (err) return res.status(500).send(); 
     if (!user) return res.status(404).send();
 
     // find post
@@ -128,20 +129,23 @@ router.put('/:post_id/vote', function (req, res) {
       if (err) return res.status(500).send();
       if (!post) return res.status(404).send();
 
-      // find index of vote in vote array where vote user equals the requester; else -1
-      var idx = _.findIndex(post.votes, function (v) {
-        if (v.user.equals(user._id)) {
-          return true;
-        }
-      });
-
-      // if no current vote for this user in vote array, create new; else update the vote
-      if (idx == -1) {
-        post.votes.push({user: user, vote: req.body.vote});
-      } else {
-        post.votes[idx].vote = req.body.vote
+      // By default, a new user's vote is 0 
+      if (!(user._id in post.votes)) {
+        post.votes[user._id] = 0 
       }
+ 
+      previousVote = post.votes[user._id] 
+      scoreChange = req.body.vote - previousVote
 
+      // Update votes dictionary with user's newest vote 
+      post.votes[user._id] = req.body.vote 
+
+      // Update score 
+      post.score += (req.body.vote == 0) ? -1 * previousVote : scoreChange 
+      // For upvotes/downvotes: add difference b/t previous & current votes to total score 
+      // For undoing votes: just subtract previous vote 
+      
+      post.markModified('votes');
       // save the post and send
       post.save(function (err, newPost) {
         if (err) res.status(500).send();
@@ -173,12 +177,11 @@ router.post('/', function (req, res) {
       author: user,
       date: Date.now(),
       comments: [],
-      votes: [],
+      votes: {},
       reacts: {},
       reactCounts: reactCountsTemplate
     }, function (err, post) {
       if (err) {
-        console.log(err)
         return res.status(500).send();
       }
       return res.status(200).send(Post.toClient(user._id, post));
@@ -221,7 +224,6 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
         // find post
         Post.findById(req.params.id, function (err, post) {
           if (err) {
-            console.log(err);
             return res.status(500).send();
           }
           if (!post) {
@@ -320,7 +322,6 @@ router.put('/:id/reacts', function (req, res) {
 
     Post.findById(req.params.id, function (err, post) {
       if (err) {
-        console.log(err)
         return res.status(500).send("internal db error");
       }
       if (!post) return res.status(404).send("could not find post");

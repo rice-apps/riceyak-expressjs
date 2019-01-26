@@ -25,19 +25,13 @@ var PostSchema = new mongoose.Schema({
   date: Date,
   author: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
   comments: [{type: mongoose.Schema.Types.ObjectId, ref: 'Comment'}],
-  votes: [{user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}, vote: Number}],
+  votes: {type: mongoose.Schema.Types.Mixed},
   reacts: {type: mongoose.Schema.Types.Mixed},
   reactCounts: {type: mongoose.Schema.Types.Mixed},
   removed: {type: Boolean, default: false},
 }, { versionKey: false, minimize: false,  usePushEach: true});
 
 PostSchema.statics.toClient = function(userID, post) {
-  userVote = 0
-  for (var i = 0; i < post.votes.length; i++) {
-    if (post.votes[i].user == userID) {
-        userVote = post.votes[i].vote
-    }
-  }
   return {
     _id: post._id,
     title: post.title,
@@ -45,8 +39,8 @@ PostSchema.statics.toClient = function(userID, post) {
     score: post.score,
     data: post.date,
     comments: Comment.toClientBatch(userID, post.comments),
-    userVote: userVote,
-    userReact: post.reacts[userID],
+    userVote: post.votes[userID] || 0,
+    userReact: post.reacts[userID] || "none",
     reactCounts: post.reactCounts
   }
 }
@@ -58,11 +52,6 @@ PostSchema.statics.toClientBatch = function(userID, posts) {
 var populate = function (next) {
   this.populate('author');
   this.populate('comments');
-  this.populate('votes');
-  // calculate score every time a document is found or saved
-  this.score = _.reduce(this.votes, function (memo, vote) {
-    return memo + vote.vote
-  }, 0);
   next();
 };
 
