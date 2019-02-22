@@ -106,7 +106,6 @@ router.get('/app', function (req, res) {
 
                 var serviceResponse = result.serviceResponse;
                 var authSucceeded = serviceResponse.authenticationSuccess;
-
                 if (authSucceeded) {
 
                     // see if this netID exists as a user already. if not, create one.

@@ -1,4 +1,4 @@
-if (process.env.NODE_ENV === 'prod') {
+if (process.env.NODE_ENV === 'production') {
   console.log("production!!")
   module.exports = {
     secret: 'TEST_SECRET',
@@ -10,6 +10,8 @@ if (process.env.NODE_ENV === 'prod') {
     appFrontEndURL: 'beakspeak://'
   };
 } else {
+  console.log("development!!")
+  ip = "10.208.178.196"
   module.exports = {
     secret: 'TEST_SECRET',
     salt: 'TEST_SALT',
