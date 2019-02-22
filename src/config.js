@@ -6,7 +6,8 @@ if (process.env.NODE_ENV === 'prod') {
     db_uri: 'mongodb://riceucsclub:r1ce4pps$wag1@ds121945.mlab.com:21945/riceyak-dev',
     CASValidateURL: 'https://idp.rice.edu/idp/profile/cas/serviceValidate',
     thisServiceURL: 'https://speak.riceapps.org/auth',
-    frontendURL: 'https://speak.riceapps.org'
+    frontendURL: 'https://speak.riceapps.org',
+    appFrontEndURL: 'beakspeak://'
   };
 } else {
   module.exports = {
