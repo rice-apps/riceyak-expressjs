@@ -5,7 +5,7 @@ if (process.env.NODE_ENV === 'production') {
     salt: 'TEST_SALT',
     db_uri: 'mongodb://riceucsclub:r1ce4pps$wag1@ds121945.mlab.com:21945/riceyak-dev',
     CASValidateURL: 'https://idp.rice.edu/idp/profile/cas/serviceValidate',
-    thisServiceURL: 'https://beakspeak-backend-232019.appspot.com/api/auth',
+    thisServiceURL: 'https://beakspeak-backend-232019.appspot.com/api/auth/app',
     frontendURL: 'https://speak.riceapps.org',
     appFrontEndURL: 'exp://127.0.0.1:19000'
   };
