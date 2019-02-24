@@ -103,7 +103,6 @@ router.get('/app', function (req, res) {
             // to prevent one-item arrays from being created from the XML.
             xmlParser(body, { tagNameProcessors: [ stripPrefix ], explicitArray: false }, function (err, result) {
                 if (err) return res.redirect(sendParamsFail(500));
-                console.log(result)
                 var serviceResponse = result.serviceResponse;
                 var authSucceeded = serviceResponse.authenticationSuccess;
                 if (authSucceeded) {
