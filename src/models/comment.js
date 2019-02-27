@@ -1,7 +1,7 @@
-var mongoose = require('mongoose');
+let mongoose = require('mongoose');
 var _ = require('underscore');
 //
-var CommentSchema = new mongoose.Schema({
+let CommentSchema = new mongoose.Schema({
     body: {
       type: String,
       maxlength: 200,
@@ -10,29 +10,24 @@ var CommentSchema = new mongoose.Schema({
     score: { type: Number, default: 0 },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     date: Date,
-    votes: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number}]
+    votes: { type: mongoose.Schema.Types.Mixed },
 }, { versionKey: false, usePushEach: true });
 
 CommentSchema.statics.toClient = function(userID, comment) {
-    userVote = 0
-    for (var i = 0; i < comment.votes.length; i++) {
-      if (commentt.votes[i].user == userID) {
-          userVote = comment.votes[i].vote
-      }
-    }
   
     return {
       _id: comment._id,
       body: comment.body,
       score: comment.score,
       data: comment.date,
-      userVote: userVote,
+      userVote: comment.votes[userID] || 0
+
     }
-  }
+  };
   
 CommentSchema.statics.toClientBatch = function(userID, comments) {
     return comments.map((c, idx) => CommentSchema.statics.toClient(userID, c))
-  }
+  };
   
 var populate = function (next) {
     this.populate('author');
@@ -46,4 +41,4 @@ var populate = function (next) {
 CommentSchema.pre('find', populate);
 CommentSchema.pre('findOne', populate);
 CommentSchema.pre('save', populate);
-module.exports = mongoose.model('Comment', CommentSchema);
+module.exports = mongoose.model('Comment', CommentSchema, "comments");
