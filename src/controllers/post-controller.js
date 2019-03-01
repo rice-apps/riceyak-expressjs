@@ -84,19 +84,24 @@ router.put('/:post_id/voteComment', function (req, res) {
         if (err) return res.status(500).send();
         if (!comment) return res.status(404).send();
 
-        // find index of vote in vote array where vote user equals the requester; else -1
-        var idx = _.findIndex(comment.votes, function (v) {
-          if (v.user.equals(user._id)) {
-            return true;
-          }
-        });
-
-        // if no current vote for this user in vote array, create new; else update the vote
-        if (idx == -1) {
-          comment.votes.push({user: user, vote: req.body.vote});
-        } else {
-          comment.votes[idx].vote = req.body.vote
+        // By default, a new user's vote is 0 
+        console.log(comment)
+        if (!(user._id in comment.votes)) {
+          comment.votes[user._id] = 0 
         }
+  
+        previousVote = comment.votes[user._id] 
+        scoreChange = req.body.vote - previousVote
+
+        // Update votes dictionary with user's newest vote 
+        comment.votes[user._id] = req.body.vote 
+
+        // Update score 
+        comment.score += (req.body.vote == 0) ? -1 * previousVote : scoreChange 
+        // For upvotes/downvotes: add difference b/t previous & current votes to total score 
+        // For undoing votes: just subtract previous vote 
+        
+        comment.markModified('votes');
 
         comment.save(function (err, newComment) {
           if (err) return res.status(500).send();
@@ -216,7 +221,8 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
         body: req.body.comment,
         author: user,
         date: Date.now(),
-        score: 0
+        score: 0,
+        votes: {}
       },
       function (err, comment) {
         if (err) res.status(500).send();
@@ -230,6 +236,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
             return res.status(404).send();
           }
 
+          console.log(comment)
           post.comments.push(comment);
           post.save(function (err, post) {
             console.log(err)
