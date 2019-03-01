@@ -54,7 +54,7 @@ router.get('/', function (request, response) {
   // Most db operations take a function as their second argument, which is called after the query completes. This
   // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
   // the second argument (posts) contains our results.
-  Post.find().where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
     if (err) {
       //console.log(err)
       return response.status(500).send(); // db error (500 internal server error)
