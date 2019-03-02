@@ -215,18 +215,19 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();
+    
     // if found, then create comment
     Comment.create(
       {
+        _id: req.body.comment_id,
         body: req.body.comment,
         author: user,
         date: Date.now(),
         score: 0,
         votes: {}
       },
-      function (err, comment) {
+      function (err, newComment) {
         if (err) res.status(500).send();
-
         // find post
         Post.findById(req.params.id, function (err, post) {
           if (err) {
@@ -236,8 +237,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
             return res.status(404).send();
           }
 
-          console.log(comment)
-          post.comments.push(comment);
+          post.comments.push(newComment);
           post.save(function (err, post) {
             console.log(err)
             return res.status(200).send(Post.toClient(user._id, post));

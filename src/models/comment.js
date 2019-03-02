@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var _ = require('underscore');
 //
 var CommentSchema = new mongoose.Schema({
+    _id: {type: String, index: true},
     body: {
       type: String,
       maxlength: 200,
@@ -19,7 +20,7 @@ CommentSchema.statics.toClient = function(userID, comment) {
       _id: comment._id,
       body: comment.body,
       score: comment.score,
-      data: comment.date,
+      date: comment.date,
       userVote: comment.votes[userID] || 0,
     }
   }
