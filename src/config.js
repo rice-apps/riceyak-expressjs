@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
     CASValidateURL: 'https://idp.rice.edu/idp/profile/cas/serviceValidate',
     thisServiceURL: 'https://beakspeak-backend-232019.appspot.com/api/auth/app',
     frontendURL: 'https://speak.riceapps.org',
-    appFrontEndURL: 'exp://127.0.0.1:19000'
+    appFrontEndURL: 'exp://exp.host/@rice-apps/beakspeak'
   };
 } else {
   console.log("development!!")
