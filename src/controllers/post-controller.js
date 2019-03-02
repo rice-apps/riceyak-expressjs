@@ -85,7 +85,6 @@ router.put('/:post_id/voteComment', function (req, res) {
         if (!comment) return res.status(404).send();
 
         // By default, a new user's vote is 0 
-        console.log(comment)
         if (!(user._id in comment.votes)) {
           comment.votes[user._id] = 0 
         }
