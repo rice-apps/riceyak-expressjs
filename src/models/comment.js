@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var _ = require('underscore');
 //
 var CommentSchema = new mongoose.Schema({
+    _id: {type: String, index: true},
     body: {
       type: String,
       maxlength: 200,
@@ -10,23 +11,17 @@ var CommentSchema = new mongoose.Schema({
     score: { type: Number, default: 0 },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     date: Date,
-    votes: [{ user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, vote: Number}]
-}, { versionKey: false, usePushEach: true });
+    votes: {type: mongoose.Schema.Types.Mixed},
+}, { versionKey: false, minimize: false, usePushEach: true });
 
 CommentSchema.statics.toClient = function(userID, comment) {
-    userVote = 0
-    for (var i = 0; i < comment.votes.length; i++) {
-      if (commentt.votes[i].user == userID) {
-          userVote = comment.votes[i].vote
-      }
-    }
   
     return {
       _id: comment._id,
       body: comment.body,
       score: comment.score,
-      data: comment.date,
-      userVote: userVote,
+      date: comment.date,
+      userVote: comment.votes[userID] || 0,
     }
   }
   

@@ -54,7 +54,7 @@ router.get('/', function (request, response) {
   // Most db operations take a function as their second argument, which is called after the query completes. This
   // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
   // the second argument (posts) contains our results.
-  Post.find().where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
     if (err) {
       //console.log(err)
       return response.status(500).send(); // db error (500 internal server error)
@@ -84,19 +84,23 @@ router.put('/:post_id/voteComment', function (req, res) {
         if (err) return res.status(500).send();
         if (!comment) return res.status(404).send();
 
-        // find index of vote in vote array where vote user equals the requester; else -1
-        var idx = _.findIndex(comment.votes, function (v) {
-          if (v.user.equals(user._id)) {
-            return true;
-          }
-        });
-
-        // if no current vote for this user in vote array, create new; else update the vote
-        if (idx == -1) {
-          comment.votes.push({user: user, vote: req.body.vote});
-        } else {
-          comment.votes[idx].vote = req.body.vote
+        // By default, a new user's vote is 0 
+        if (!(user._id in comment.votes)) {
+          comment.votes[user._id] = 0 
         }
+  
+        previousVote = comment.votes[user._id] 
+        scoreChange = req.body.vote - previousVote
+
+        // Update votes dictionary with user's newest vote 
+        comment.votes[user._id] = req.body.vote 
+
+        // Update score 
+        comment.score += (req.body.vote == 0) ? -1 * previousVote : scoreChange 
+        // For upvotes/downvotes: add difference b/t previous & current votes to total score 
+        // For undoing votes: just subtract previous vote 
+        
+        comment.markModified('votes');
 
         comment.save(function (err, newComment) {
           if (err) return res.status(500).send();
@@ -210,17 +214,19 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
   User.findById(req.user.userID, function (err, user) {
     if (err) return res.status(500).send();
     if (!user) return res.status(404).send();
+    
     // if found, then create comment
     Comment.create(
       {
+        _id: req.body.comment_id,
         body: req.body.comment,
         author: user,
         date: Date.now(),
-        score: 0
+        score: 0,
+        votes: {}
       },
-      function (err, comment) {
+      function (err, newComment) {
         if (err) res.status(500).send();
-
         // find post
         Post.findById(req.params.id, function (err, post) {
           if (err) {
@@ -230,7 +236,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
             return res.status(404).send();
           }
 
-          post.comments.push(comment);
+          post.comments.push(newComment);
           post.save(function (err, post) {
             console.log(err)
             return res.status(200).send(Post.toClient(user._id, post));
