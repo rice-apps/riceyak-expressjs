@@ -14,16 +14,15 @@ router.use(bodyParser.json());
  */
 router.post('/', function (req, res) {
 
-  User.findById(req.user.userID, function (err, user) {
+  Post.findById(req.body.id, function (err, post) {
     if (err) return res.status(500).send();
-    if (!user) return res.status(404).send();
+    if (!post) return res.status(404).send();
 
     Report.create(
       {
+        type: req.body.type,
         reason: req.body.reason,
-        author: user,
-        post: req.body.post_id,
-        reviewed: false
+        postid: req.body.id,
       }, function (err) {
         if (err) return res.status(500).send();
         return res.status(200).send();

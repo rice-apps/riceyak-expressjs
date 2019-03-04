@@ -59,5 +59,5 @@ PostSchema.pre('find', populate);
 PostSchema.pre('findOne', populate);
 PostSchema.pre('save', populate);
 
-Posts = mongoose.model('Post', PostSchema, "noush_posts")
+Posts = mongoose.model('Post', PostSchema, "posts")
 module.exports = Posts
