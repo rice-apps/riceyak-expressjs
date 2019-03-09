@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var _ = require('underscore');
 var Comment = require('./comment')
+var config = require('../config');
 
 var validReacts = {
   "angry": 0,
@@ -59,5 +60,5 @@ PostSchema.pre('find', populate);
 PostSchema.pre('findOne', populate);
 PostSchema.pre('save', populate);
 
-Posts = mongoose.model('Post', PostSchema, "posts")
+Posts = mongoose.model('Post', PostSchema, config.posts_collection)
 module.exports = Posts
