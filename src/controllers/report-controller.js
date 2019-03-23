@@ -3,22 +3,44 @@ var bodyParser = require('body-parser');
 var router = express.Router();
 
 var User = require('../models/user');
-var Report = require('../models/report');
+var PostReport = require('../models/post-report');
+var CommentReport = require('../models/comment-report');
 var Post = require('../models/post');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
 
 /**
- * Posts a report.
+ * Posts a post report.
  */
-router.post('/', function (req, res) {
+router.post('/posts', function (req, res) {
 
   Post.findById(req.body.id, function (err, post) {
     if (err) return res.status(500).send();
     if (!post) return res.status(404).send();
 
-    Report.create(
+    PostReport.create(
+      {
+        type: req.body.type,
+        reason: req.body.reason,
+        postid: req.body.id,
+      }, function (err) {
+        if (err) return res.status(500).send();
+        return res.status(200).send();
+      })
+  });
+});
+
+/**
+ * Posts a comment report.
+ */
+router.post('/comments', function (req, res) {
+
+  Post.findById(req.body.id, function (err, post) {
+    if (err) return res.status(500).send();
+    if (!post) return res.status(404).send();
+
+    CommentReport.create(
       {
         type: req.body.type,
         reason: req.body.reason,
