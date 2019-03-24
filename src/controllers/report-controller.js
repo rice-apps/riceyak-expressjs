@@ -6,6 +6,7 @@ var User = require('../models/user');
 var PostReport = require('../models/post-report');
 var CommentReport = require('../models/comment-report');
 var Post = require('../models/post');
+var Comment = require('../models/comment')
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
@@ -14,7 +15,6 @@ router.use(bodyParser.json());
  * Posts a post report.
  */
 router.post('/posts', function (req, res) {
-
   Post.findById(req.body.id, function (err, post) {
     if (err) return res.status(500).send();
     if (!post) return res.status(404).send();
@@ -36,7 +36,7 @@ router.post('/posts', function (req, res) {
  */
 router.post('/comments', function (req, res) {
 
-  Post.findById(req.body.id, function (err, post) {
+  Comment.findById(req.body.id, function (err, post) {
     if (err) return res.status(500).send();
     if (!post) return res.status(404).send();
 

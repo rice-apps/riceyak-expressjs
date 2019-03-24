@@ -4,7 +4,7 @@ var PostReportSchema = new mongoose.Schema({
     type: String, 
     reason: String,
     postid: String, 
-}, { versionKey: false, collection: 'post_reports'});
+}, { versionKey: false});
 
 // var populate = function (next) {
 //     this.populate('author');
