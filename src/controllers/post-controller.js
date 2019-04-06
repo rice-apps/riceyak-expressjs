@@ -12,6 +12,39 @@ var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
 
+/**
+ * Methods to re-score posts based on a factor of both score and recency. Weighted based on Reddit's "HOT" algorithm. 
+ */
+// Get the number of seconds of a post since the Unix epoch (1/1/1970). 
+var epochSeconds = function (date) {
+  return Math.floor(date.getTime() / 1000);
+}
+
+// 1 if score is positive, -1 if score is negative, 0 if score is 0 
+var sign = function(score) {
+  if (score > 0) {
+    return 1; 
+  }
+  else if (score < 0) {
+    return -1; 
+  }
+  else {
+    return 0;
+  }
+}
+
+// Based on Reddit's "HOT" algorithm 
+var hotScore = function (score, date) {
+  order = Math.log10(Math.max(Math.abs(score), 1)); 
+  s = sign(score); 
+  seconds = epochSeconds(date) - 1134028003; 
+  console.log("Score :", score);
+  console.log("Date: ", date);
+  console.log("Hot score: ", Math.round(s * order * seconds / 45000, 7));
+  return Math.round(s * order * seconds / 45000, 7)
+}
+
+
 Map.prototype.setSafe = function (key, item) {
   if (typeof key == {type: mongoose.Schema.Types.ObjectId, ref: 'User'}) {
     this.set(key, item);
@@ -44,21 +77,27 @@ var commentLimiter = new RateLimit({
 });
 
 
-
 /**
- * Returns all posts.
+ * Returns all posts. (Sort by HOT)
  */
-router.get('/', function (request, response) {
+router.get('/hot', function (request, response) {
   //'find' returns all objects matching the given query - and all objects match the empty query "{}".
 
   // Most db operations take a function as their second argument, which is called after the query completes. This
   // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
   // the second argument (posts) contains our results.
-  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).limit(100).exec(function (err, posts) {
     if (err) {
       //console.log(err)
       return response.status(500).send(); // db error (500 internal server error)
     }
+
+    var numPosts = posts.length; 
+    for (var i = 0; i < numPosts; i++) {
+      posts[i]._hotScore = hotScore(posts[i].score, posts[i].date);
+    }
+    posts.sort((a, b) => a._hotScore - b._hotScore);
+    posts.reverse();
     return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
   })
 });
@@ -393,3 +432,6 @@ router.get('/:id/reacts', function (req, res) {
 });
 
 module.exports = router;
+
+
+
