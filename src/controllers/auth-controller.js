@@ -91,18 +91,19 @@ router.get('/', function (req, res) {
 
 router.get('/app', function (req, res) {
     console.log("Authenticating app");
-    var ticket = req.query.ticket;
+    let ticket = req.query.ticket;
+    let returnUrl = req.query.return;
 
     if (ticket) {
         // validate our ticket against the CAS server
-        var validateUrl = `${config.CASValidateURL}?ticket=${ticket}&service=${config.thisServiceURL}`;
+        var validateUrl = `${config.CASValidateURL}?ticket=${ticket}&service=${config.thisServiceURL}?return=${returnUrl}`;
         request(validateUrl, function (err, response, body) {
-            if (err) return res.redirect(sendParamsFail(500));
+            if (err) return res.redirect(sendParamsFail(returnUrl, 500));
 
             // parse the XML. tagNameProcessors: [stripPrefix] to strip XML prefixes and explicitArray: false
             // to prevent one-item arrays from being created from the XML.
             xmlParser(body, { tagNameProcessors: [ stripPrefix ], explicitArray: false }, function (err, result) {
-                if (err) return res.redirect(sendParamsFail(500));
+                if (err) return res.redirect(sendParamsFail(returnUrl, 500));
                 var serviceResponse = result.serviceResponse;
                 var authSucceeded = serviceResponse.authenticationSuccess;
                 if (authSucceeded) {
@@ -112,55 +113,55 @@ router.get('/app', function (req, res) {
                     var hashedUsername = shajs('sha256').update(config.salt + authSucceeded.user).digest('hex');
 
                     User.findOne({ username: hashedUsername }, function (err, user) {
-                        if (err) return res.redirect(sendParamsFail(500));
+                        if (err) return res.redirect(sendParamsFail(returnUrl, 500));
 
                         // if the user does not exist, create a new one
                         if (!user) {
                             User.create({ username: hashedUsername }, function (err, newUser) {
-                                if (err) return res.redirect(sendParamsFail(500));
+                                if (err) return res.redirect(sendParamsFail(returnUrl, 500));
 
                                 // create their avatar URL
                                 newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
 
                                 newUser.save(function (err, u) {
-                                    if (err) return res.redirect(sendParamsFail(500));
+                                    if (err) return res.redirect(sendParamsFail(returnUrl, 500));
                                 });
 
                                 // here, we create a token with the user's info as its payload.
                                 // authSucceded contains: { user: <username>, attributes: <attributes>}
                                 var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
-                                return res.redirect(sendParamsSuccess(res, newUser._id, token, newUser.avatar_url, true));
+                                return res.redirect(sendParamsSuccess(returnUrl, res, newUser._id, token, newUser.avatar_url, true));
                             });
 
                             // if they do exist, create a token with the user's info
                         } else {
                             if(user.is_banned){
-                                return res.redirect(sendParamsFail(401));
+                                return res.redirect(sendParamsFail(returnUrl, 401));
                             }
                             var token = jwt.sign({data: authSucceeded, userID: user._id, is_admin: user.is_admin}, config.secret);
-                            return res.redirect(sendParamsSuccess(res, user._id, token, user.avatar_url, false));
+                            return res.redirect(sendParamsSuccess(returnUrl, res, user._id, token, user.avatar_url, false));
                         }
                     });
 
                 } else if (serviceResponse.authenticationFailure) {
-                    return res.redirect(sendParamsFail(401));
+                    return res.redirect(sendParamsFail(returnUrl, 401));
 
                 } else {
-                    return res.redirect(sendParamsFail(500));
+                    return res.redirect(sendParamsFail(returnUrl, 500));
                 }
             });
         });
 
     } else {
-        return res.redirect(sendParamsFail(400));
+        return res.redirect(sendParamsFail(returnUrl, 400));
     }
 
 
 });
 
-var sendParamsSuccess = function (res, userID, token, avatarURL, isNew) {
+var sendParamsSuccess = function (returnUrl, res, userID, token, avatarURL, isNew) {
     return url.format({
-        pathname: config.appFrontEndURL,
+        pathname: returnUrl,
         query: {
             success: true,
             message: 'CAS authentication success',
@@ -173,9 +174,9 @@ var sendParamsSuccess = function (res, userID, token, avatarURL, isNew) {
     )
 };
 
-var sendParamsFail = function (code) {
+var sendParamsFail = function (returnUrl, code) {
     return url.format({
-            pathname: config.appFrontEndURL,
+            pathname: returnUrl,
             query: {
                 success: false,
                 message: `CAS authentication failure, error code ${code}`,
