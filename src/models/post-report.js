@@ -1,10 +1,10 @@
 var mongoose = require('mongoose');
 //
-var PostReportSchema = new mongoose.Schema({
+var ReportSchema = new mongoose.Schema({
     type: String, 
     reason: String,
     postid: String, 
-}, { versionKey: false, collection: 'post_reports'});
+}, { versionKey: false });
 
 // var populate = function (next) {
 //     this.populate('author');
@@ -16,4 +16,4 @@ var PostReportSchema = new mongoose.Schema({
 // ReportSchema.pre('find', populate);
 // ReportSchema.pre('findOne', populate);
 
-module.exports = mongoose.model('PostReport', PostReportSchema, 'post_reports');
+module.exports = mongoose.model('Report', ReportSchema);
