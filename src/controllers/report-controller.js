@@ -36,7 +36,6 @@ router.post('/posts', function (req, res) {
  * Posts a comment report.
  */
 router.post('/comments', function (req, res) {
-
     Comment.findById(req.body.id, function (err, post) {
         if (err) return res.status(500).send();
         if (!post) return res.status(404).send();
