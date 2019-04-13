@@ -11,7 +11,7 @@ if (process.env.NODE_ENV === 'production') {
   };
 } else {
   console.log("development!!")
-  ip = "YOUR IP ADDRESS"
+  ip = "YOUR IP ADDRESS HERE"
   module.exports = {
     secret: 'TEST_SECRET',
     salt: 'TEST_SALT',
