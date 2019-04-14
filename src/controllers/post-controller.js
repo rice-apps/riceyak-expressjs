@@ -38,9 +38,6 @@ var hotScore = function (score, date) {
   order = Math.log10(Math.max(Math.abs(score), 1)); 
   s = sign(score); 
   seconds = epochSeconds(date) - 1134028003; 
-  console.log("Score :", score);
-  console.log("Date: ", date);
-  console.log("Hot score: ", Math.round(s * order * seconds / 45000, 7));
   return Math.round(s * order * seconds / 45000, 7)
 }
 
@@ -78,7 +75,7 @@ var commentLimiter = new RateLimit({
 
 
 /**
- * Returns all posts. (Sort by HOT)
+ * Returns all posts. (Sort by TRENDING)
  */
 router.get('/hot', function (request, response) {
   //'find' returns all objects matching the given query - and all objects match the empty query "{}".
@@ -98,6 +95,42 @@ router.get('/hot', function (request, response) {
     }
     posts.sort((a, b) => a._hotScore - b._hotScore);
     posts.reverse();
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
+  })
+});
+
+/**
+ * Returns all posts. (Sort by BEST)
+ */
+router.get('/top', function (request, response) {
+  //'find' returns all objects matching the given query - and all objects match the empty query "{}".
+
+  // Most db operations take a function as their second argument, which is called after the query completes. This
+  // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
+  // the second argument (posts) contains our results.
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort( {score: -1} ).limit(100).exec(function (err, posts) {
+    if (err) {
+      //console.log(err)
+      return response.status(500).send(); // db error (500 internal server error)
+    }
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
+  })
+});
+
+/**
+ * Returns all posts. (Sort by NEW)
+ */
+router.get('/new', function (request, response) {
+  //'find' returns all objects matching the given query - and all objects match the empty query "{}".
+
+  // Most db operations take a function as their second argument, which is called after the query completes. This
+  // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
+  // the second argument (posts) contains our results.
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
+    if (err) {
+      //console.log(err)
+      return response.status(500).send(); // db error (500 internal server error)
+    }
     return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
   })
 });
