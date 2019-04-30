@@ -38,7 +38,7 @@ PostSchema.statics.toClient = function(userID, post) {
     title: post.title,
     body: post.body,
     score: post.score,
-    data: post.date,
+    date: post.date,
     comments: Comment.toClientBatch(userID, post.comments),
     userVote: post.votes[userID] || 0,
     userReact: post.reacts[userID] || "none",
