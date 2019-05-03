@@ -24,3 +24,5 @@ if (process.env.NODE_ENV === 'production') {
     num_post_limit: 500
   };
 }
+
+// You can obtain the username and password from the president or team drive
