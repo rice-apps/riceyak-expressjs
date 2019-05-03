@@ -3,22 +3,26 @@ if (process.env.NODE_ENV === 'production') {
   module.exports = {
     secret: 'TEST_SECRET',
     salt: 'TEST_SALT',
-    db_uri: 'mongodb://riceucsclub:r1ce4pps$wag1@ds121945.mlab.com:21945/riceyak-dev',
+    db_uri: 'mongodb://USERNAME:PASSWORD@ds121945.mlab.com:21945/riceyak-dev',
     CASValidateURL: 'https://idp.rice.edu/idp/profile/cas/serviceValidate',
     thisServiceURL: 'https://beakspeak-backend-232019.appspot.com/api/auth/app',
     frontendURL: 'https://speak.riceapps.org',
-    posts_collection: 'prod_posts'
+    posts_collection: 'prod_posts',
+    num_post_limit: 500
   };
 } else {
   console.log("development!!")
-  ip = "YOUR IP ADDRESS HERE"
+  ip = "YOUR IP ADDRES"
   module.exports = {
     secret: 'TEST_SECRET',
     salt: 'TEST_SALT',
-    db_uri: 'mongodb://riceucsclub:r1ce4pps$wag1@ds121945.mlab.com:21945/riceyak-dev',
+    db_uri: 'mongodb://USERNAME:PASSWORD@ds121945.mlab.com:21945/riceyak-dev',
     CASValidateURL: 'https://idp.rice.edu/idp/profile/cas/serviceValidate',
     thisServiceURL: 'http://'+ip+':3000/api/auth/app',
     frontendURL: 'http://localhost:4200',
-    posts_collection: 'dev_posts'
+    posts_collection: 'dev_posts',
+    num_post_limit: 500
   };
 }
+
+// You can obtain the username and password from the president or team drive

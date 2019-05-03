@@ -91,10 +91,8 @@ router.get('/', function (req, res) {
 
 router.get('/app', function (req, res) {
     console.log("Authenticating app");
-    console.log(req.query)
     let ticket = req.query.ticket;
     let returnUrl = req.query.return;
-    console.log(returnUrl)
     if (ticket) {
         // validate our ticket against the CAS server
         var validateUrl = `${config.CASValidateURL}?ticket=${ticket}&service=${config.thisServiceURL}?return=${returnUrl}`;
@@ -166,10 +164,7 @@ var sendParamsSuccess = function (returnUrl, res, userID, token, avatarURL, isNe
         query: {
             success: true,
             message: 'CAS authentication success',
-            // userID: userID,
             token: token,
-            // avatarURL: avatarURL,
-            // isNew: isNew
         }
         }
     )

@@ -3,6 +3,7 @@ var _ = require('underscore');
 //
 var CommentSchema = new mongoose.Schema({
     _id: {type: String, index: true},
+    post_id: {type: String},
     body: {
       type: String,
       maxlength: 200,

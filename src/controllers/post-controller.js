@@ -11,6 +11,24 @@ var Comment = require('../models/comment');
 var authMiddleWare = require('../middleware/auth-middleware'); // auth checker
 router.use(authMiddleWare);
 router.use(bodyParser.json());
+var {num_post_limit} = require('../config')
+
+/**
+ * Methods to re-score posts based on a factor of both score and recency. Weighted based on Reddit's "HOT" algorithm. 
+ */
+// Get the number of seconds of a post since the Unix epoch (1/1/1970). 
+var epochSeconds = function (date) {
+  return Math.floor(date.getTime() / 1000);
+}
+
+// Based on Reddit's "HOT" algorithm 
+var hotScore = function (score, date) {
+  order = Math.log10(Math.max(Math.abs(score), 1)); 
+  s = Math.sign(score); 
+  seconds = epochSeconds(date) - 1134028003; 
+  return Math.round(s * order * seconds / 45000, 7)
+}
+
 
 Map.prototype.setSafe = function (key, item) {
     if (typeof key == {type: mongoose.Schema.Types.ObjectId, ref: 'User'}) {
@@ -28,14 +46,13 @@ var keyGen = function (req) {
     return req.user.userID;
 };
 
-/*
 var postLimiter = new RateLimit({
   windowMs: 30 * 60 * 1000, // 30 min window
   max: 10, // maximum 10 posts per window
   delayAfter: 0, // never delay
   keyGenerator: keyGen
 });
-*/
+
 var commentLimiter = new RateLimit({
     windowMs: 30 * 60 * 1000,
     max: 50,
@@ -44,23 +61,63 @@ var commentLimiter = new RateLimit({
 });
 
 
+/**
+ * Returns all posts. (Sort by TRENDING)
+ */
+router.get('/hot', function (request, response) {
+  //'find' returns all objects matching the given query - and all objects match the empty query "{}".
+
+  // Most db operations take a function as their second argument, which is called after the query completes. This
+  // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
+  // the second argument (posts) contains our results.
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).limit(num_post_limit).exec(function (err, posts) {
+    if (err) {
+      return response.status(500).send(); // db error (500 internal server error)
+    }
+
+    var numPosts = posts.length; 
+    for (var i = 0; i < numPosts; i++) {
+      posts[i]._hotScore = hotScore(posts[i].score, posts[i].date);
+    }
+    posts.sort((a, b) =>  b._hotScore - a._hotScore);
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
+  })
+});
 
 /**
- * Returns all posts.
+ * Returns all posts. (Sort by BEST)
  */
-router.get('/', function (request, response) {
-    //'find' returns all objects matching the given query - and all objects match the empty query "{}".
+router.get('/top', function (request, response) {
+  //'find' returns all objects matching the given query - and all objects match the empty query "{}".
 
-    // Most db operations take a function as their second argument, which is called after the query completes. This
-    // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
-    // the second argument (posts) contains our results.
-    Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(100).exec(function (err, posts) {
-        if (err) {
-            //console.log(err)
-            return response.status(500).send(); // db error (500 internal server error)
-        }
-        return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
-    })
+  // Most db operations take a function as their second argument, which is called after the query completes. This
+  // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
+  // the second argument (posts) contains our results.
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort( {score: -1} ).limit(num_post_limit).exec(function (err, posts) {
+    if (err) {
+      //console.log(err)
+      return response.status(500).send(); // db error (500 internal server error)
+    }
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
+  })
+});
+
+/**
+ * Returns all posts. (Sort by NEW)
+ */
+router.get('/new', function (request, response) {
+  //'find' returns all objects matching the given query - and all objects match the empty query "{}".
+
+  // Most db operations take a function as their second argument, which is called after the query completes. This
+  // function executes after the operation finishes - if there's an error, the first argument (err) is true. If not,
+  // the second argument (posts) contains our results.
+  Post.find({}, {comments: {$slice: 100}}).where('removed').equals(false).sort('-date').limit(num_post_limit).exec(function (err, posts) {
+    if (err) {
+      //console.log(err)
+      return response.status(500).send(); // db error (500 internal server error)
+    }
+    return response.status(200).send(Post.toClientBatch(request.user.userID, posts)); // success - send the posts!
+  })
 });
 
 router.put('/:post_id/voteComment', function (req, res) {
@@ -163,7 +220,7 @@ router.put('/:post_id/vote', function (req, res) {
 /**
  * Posts a post.
  */
-router.post('/', function (req, res) {
+router.post('/', postLimiter, function (req, res) {
     User.findById(req.user.userID, function (err, user) {
         if (err) return res.status(500).send();
         if (!user) return res.status(404).send();
@@ -186,6 +243,7 @@ router.post('/', function (req, res) {
             reactCounts: reactCountsTemplate
         }, function (err, post) {
             if (err) {
+                console.log(err)
                 return res.status(500).send();
             }
             return res.status(200).send(Post.toClient(user._id, post));
@@ -219,6 +277,7 @@ router.post('/:id/comments', commentLimiter, function (req, res) {
         Comment.create(
             {
                 _id: req.body.comment_id,
+                post_id: req.params.id,
                 body: req.body.comment,
                 author: user,
                 date: Date.now(),
@@ -393,3 +452,6 @@ router.get('/:id/reacts', function (req, res) {
 });
 
 module.exports = router;
+
+
+
