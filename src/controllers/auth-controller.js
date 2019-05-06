@@ -47,23 +47,38 @@ router.get('/', function (req, res) {
           User.findOne({ username: hashedUsername }, function (err, user) {
             if (err) return res.status(500);
 
-            // if the user does not exist, create a new one
             if (!user) {
-              User.create({ username: hashedUsername }, function (err, newUser) {
-                if (err) return res.status(500);
+              // check they're not in the database due to an old salt
+              var oldHashedUsername = shajs('sha256').update(config.prev_salt + authSucceeded.user).digest('hex');
+              User.findOne({username: oldHashedUsername}, function(err, oldUser){
+                    if (!err && oldUser) {
+                        console.log("converting old user")
+                        oldUser.username = hashedUsername
+                        oldUser.save(function(err, u) {
+                            if (err) return res.status(500).send();
+                        })       
+                        var token = jwt.sign({ data: authSucceeded, userID: oldUser._id, is_admin: oldUser.is_admin }, config.secret);
+                        sendJSON(res, oldUser._id, token, oldUser.avatar_url, true);
+                    }
+                    else {
+                        // if the user does not exist, create a new one
+                        User.create({ username: hashedUsername }, function (err,newUser) {
+                            if (err) return res.status(500);
+                            console.log("creating new user")
+                            // create their avatar URL
+                            newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
 
-                // create their avatar URL
-                newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
+                            newUser.save(function (err, u) {
+                            if (err) return res.status(500).send();
+                            });
 
-                newUser.save(function (err, u) {
-                  if (err) return res.status(500).send();
-                });
-
-                // here, we create a token with the user's info as its payload.
-                // authSucceded contains: { user: <username>, attributes: <attributes>}
-                var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
-                sendJSON(res, newUser._id, token, newUser.avatar_url, true);
-              });
+                            // here, we create a token with the user's info as its payload.
+                            // authSucceded contains: { user: <username>, attributes: <attributes>}
+                            var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
+                            sendJSON(res, newUser._id, token, newUser.avatar_url, true);
+                        });
+                    }
+              })
 
             // if they do exist, create a token with the user's info
             } else {
@@ -110,29 +125,43 @@ router.get('/app', function (req, res) {
                     // see if this netID exists as a user already. if not, create one.
                     // we find the SHA256 hash of the username, because usernames are stored as hashes for security.
                     var hashedUsername = shajs('sha256').update(config.salt + authSucceeded.user).digest('hex');
-
                     User.findOne({ username: hashedUsername }, function (err, user) {
                         if (err) return res.redirect(sendParamsFail(returnUrl, 500));
 
                         // if the user does not exist, create a new one
                         if (!user) {
-                            User.create({ username: hashedUsername }, function (err, newUser) {
-                                if (err) return res.redirect(sendParamsFail(returnUrl, 500));
-
-                                // create their avatar URL
-                                newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
-
-                                newUser.save(function (err, u) {
-                                    if (err) return res.redirect(sendParamsFail(returnUrl, 500));
-                                });
-
-                                // here, we create a token with the user's info as its payload.
-                                // authSucceded contains: { user: <username>, attributes: <attributes>}
-                                var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
-                                return res.redirect(sendParamsSuccess(returnUrl, res, newUser._id, token, newUser.avatar_url, true));
-                            });
-
-                            // if they do exist, create a token with the user's info
+                            var oldHashedUsername = shajs('sha256').update(config.prev_salt + authSucceeded.user).digest('hex');
+                            User.findOne({username: oldHashedUsername}, function(err, oldUser){
+                                  if (!err && oldUser) {
+                                      console.log("converting old user")
+                                      oldUser.username = hashedUsername
+                                      oldUser.save(function(err, u) {
+                                          if (err) return res.status(500).send();
+                                      })       
+                                      var token = jwt.sign({ data: authSucceeded, userID: oldUser._id, is_admin: oldUser.is_admin }, config.secret);
+                                      return res.redirect(sendParamsSuccess(returnUrl, res, oldUser._id, token, oldUser.avatar_url, false));
+                                  }
+                                  else {
+                                      // if the user does not exist, create a new one
+                                      User.create({ username: hashedUsername }, function (err,newUser) {
+                                          if (err) return res.status(500);
+                                          console.log("creating new user")
+                                          // create their avatar URL
+                                          newUser.avatar_url = `https://api.adorable.io/avatars/128/${newUser._id}`;
+              
+                                          newUser.save(function (err, u) {
+                                          if (err) return res.status(500).send();
+                                          });
+              
+                                          // here, we create a token with the user's info as its payload.
+                                          // authSucceded contains: { user: <username>, attributes: <attributes>}
+                                          var token = jwt.sign({ data: authSucceeded, userID: newUser._id, is_admin: newUser.is_admin }, config.secret);
+                                          return res.redirect(sendParamsSuccess(returnUrl, res, newUser._id, token, newUser.avatar_url, true));
+                                      });
+                                  }
+                            })
+              
+                                          // if they do exist, create a token with the user's info
                         } else {
                             if(user.is_banned){
                                 return res.redirect(sendParamsFail(returnUrl, 401));
