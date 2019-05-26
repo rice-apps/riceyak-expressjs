@@ -194,6 +194,7 @@ var sendParamsSuccess = function (returnUrl, res, userID, token, avatarURL, isNe
             success: true,
             message: 'CAS authentication success',
             token: token,
+            isNew: isNew
         }
         }
     )
